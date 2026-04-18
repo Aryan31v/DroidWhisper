@@ -10,14 +10,14 @@
             --accent-color: #00f2fe;
             --recording-color: #f5576c;
             --text-color: #ffffff;
-            --glass-border: rgba(255, 255, 255, 0.15);
+            --solid-border: #33333a;
         }
 
         body {
             margin: 0;
             padding: 0;
             font-family: 'Outfit', 'Inter', system-ui, sans-serif;
-            background: transparent;
+            background: var(--bg-color); /* Non-transparent */
             color: var(--text-color);
             display: flex;
             justify-content: center;
@@ -31,13 +31,12 @@
             width: 320px;
             height: 48px;
             background: var(--bg-color);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
+            border: 2px solid var(--solid-border); /* Solid border */
             border-radius: 24px;
             display: flex;
             align-items: center;
             padding: 0 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.8);
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
@@ -51,6 +50,14 @@
         }
 
         .dot {
+            width: 10px;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dot-inner {
             width: 8px;
             height: 8px;
             background: var(--accent-color);
@@ -59,7 +66,7 @@
             transition: all 0.3s ease;
         }
 
-        .pill.recording .dot {
+        .pill.recording .dot-inner {
             background: var(--recording-color);
             box-shadow: 0 0 15px var(--recording-color);
             transform: scale(1.5);
@@ -75,29 +82,33 @@
         .status-text {
             flex-grow: 1;
             font-size: 0.85rem;
-            font-weight: 600;
+            font-weight: 700;
             letter-spacing: 0.5px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            text-transform: uppercase;
         }
 
         .hotkey {
             font-size: 0.65rem;
-            opacity: 0.4;
-            font-weight: 500;
-            padding-left: 8px;
-            border-left: 1px solid rgba(255,255,255,0.1);
+            opacity: 0.6;
+            font-weight: 800;
+            padding-left: 10px;
+            border-left: 2px solid var(--solid-border);
+            color: var(--accent-color);
         }
     </style>
 </head>
 <body>
     <div id="pill" class="pill">
         <div class="status-dot">
-            <div class="dot"></div>
+            <div class="dot">
+                <div class="dot-inner"></div>
+            </div>
         </div>
         <div id="status-label" class="status-text">Ready</div>
-        <div class="hotkey">Alt+Caps</div>
+        <div class="hotkey">ALT+CAPS</div>
     </div>
 
     <script>
@@ -111,8 +122,10 @@
             
             if (status.includes('Recording')) {
                 pill.classList.add('recording');
+                pill.style.borderColor = 'var(--recording-color)';
             } else {
                 pill.classList.remove('recording');
+                pill.style.borderColor = 'var(--solid-border)';
             }
         });
     </script>

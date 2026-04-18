@@ -1,7 +1,7 @@
 """
 whisperBackend.py
 Local Faster-Whisper transcription service with Global Hotkey support.
-Provides: Global hotkey listening (Alt+CapsLock) with debounce for Linux key-repeat.
+Provides: Global hotkey listening (Alt+CapsLock) with TOGGLE behavior.
 Dependencies: faster-whisper, pynput.
 Used by: transcriptionBridge.js.
 """
@@ -17,11 +17,11 @@ from pynput import keyboard
 # State management
 is_recording = False
 pressed_keys = set()
-last_release_time = 0
+last_toggle_time = 0
 kb_controller = keyboard.Controller()
 
-def on_press(key, signal_start):
-    global is_recording
+def on_press(key, signal_start, signal_stop):
+    global is_recording, last_toggle_time
     pressed_keys.add(key)
     
     # Check for Alt + CapsLock
@@ -29,37 +29,27 @@ def on_press(key, signal_start):
     has_caps = keyboard.Key.caps_lock in pressed_keys
     
     if (has_alt and has_caps) or (key == keyboard.Key.f8):
-        if not is_recording:
-            is_recording = True
-            signal_start()
-
-def on_release(key, signal_stop):
-    global is_recording, last_release_time
-    if key in pressed_keys:
-        pressed_keys.remove(key)
-    
-    # Debounce for Linux Key Repeat
-    # We wait a tiny bit to see if it's just a repeat-release
-    def delayed_check():
-        global is_recording
-        time.sleep(0.05) # 50ms debounce
-        
-        has_alt = any(k in (keyboard.Key.alt, keyboard.Key.alt_l, keyboard.Key.alt_r) for k in pressed_keys)
-        has_caps = keyboard.Key.caps_lock in pressed_keys
-        
-        if not (has_alt and has_caps):
-            if is_recording:
+        current_time = time.time()
+        # Cooldown of 500ms to prevent accidental double toggles
+        if current_time - last_toggle_time > 0.5:
+            last_toggle_time = current_time
+            if not is_recording:
+                is_recording = True
+                signal_start()
+            else:
                 is_recording = False
                 signal_stop()
 
-    threading.Thread(target=delayed_check, daemon=True).start()
+def on_release(key):
+    if key in pressed_keys:
+        pressed_keys.remove(key)
 
 def start_hotkey_listener(callback_start, callback_stop):
     def _on_press(key):
-        on_press(key, callback_start)
+        on_press(key, callback_start, callback_stop)
             
     def _on_release(key):
-        on_release(key, callback_stop)
+        on_release(key)
 
     listener = keyboard.Listener(on_press=_on_press, on_release=_on_release)
     listener.start()
@@ -70,11 +60,9 @@ def main():
     device = os.getenv("WHISPER_DEVICE", "cpu")
     compute_type = "int8" if device == "cpu" else "float16"
 
-    # Be very explicit about loading
     print(f"DEBUG: Initializing faster-whisper model '{model_size}'...", file=sys.stderr)
     
     try:
-        # This will download the model if not present
         model = WhisperModel(model_size, device=device, compute_type=compute_type)
         print(f"DEBUG: Model '{model_size}' loaded successfully.", file=sys.stderr)
     except Exception as e:
@@ -87,12 +75,15 @@ def main():
         print(json.dumps({"event": "recording_start"}), flush=True)
 
     def signal_stop():
+        # Ensure CapsLock is explicitly turned OFF if it was toggled by the system
+        # kb_controller.press(keyboard.Key.caps_lock)
+        # kb_controller.release(keyboard.Key.caps_lock)
         print(json.dumps({"event": "recording_stop"}), flush=True)
 
     # Start hotkey listener
     start_hotkey_listener(signal_start, signal_stop)
 
-    # IPC loop for manual transcription requests
+    # IPC loop
     while True:
         line = sys.stdin.readline()
         if not line:
@@ -107,6 +98,7 @@ def main():
             continue
 
         try:
+            # beam_size 5 for accuracy, increased from 1
             segments, info = model.transcribe(audio_path, beam_size=5)
             text = " ".join([segment.text for segment in segments]).strip()
             print(json.dumps({"text": text}), flush=True)
