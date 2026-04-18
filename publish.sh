@@ -1,35 +1,48 @@
 #!/bin/bash
-# DroidWhisper Safe Publish Script
-# Ensures secrets aren't accidentally committed before pushing.
+# DroidWhisper Hardened Publish Script (v9.0)
+# Ensures personal data and secrets aren't accidentally committed.
 
-echo -e "\n🔍 Checking for sensitive files..."
+echo -e "\n🛡️ DroidWhisper Security Audit..."
 
-# Double check if .env is being tracked
+# 1. Check if .env is being tracked
 if git ls-files --error-unmatch .env >/dev/null 2>&1; then
-    echo -e "❌ ERROR: .env is being tracked by Git! Run 'git rm --cached .env' first."
+    echo -e "❌ CRITICAL ERROR: .env is in the git index! Remove it: 'git rm --cached .env'"
     exit 1
 fi
 
-# Check for large wav files being tracked
-if git ls-files | grep ".wav" >/dev/null 2>&1; then
-    echo -e "❌ ERROR: .wav files are being tracked! Check your .gitignore."
+# 2. Check for large media or audio files
+WAV_STAGED=$(git diff --cached --name-only | grep ".wav")
+if [ ! -z "$WAV_STAGED" ]; then
+    echo -e "❌ ERROR: You are trying to commit audio files (.wav). This violates privacy rules."
     exit 1
 fi
 
-echo -e "✅ Security check passed."
+# 3. Scan for accidentally staged local system paths (Anonymization check)
+LOCAL_PATH_LEAK=$(git diff --cached | grep -E "/home/|/Users/|C:\\\\Users")
+if [ ! -z "$LOCAL_PATH_LEAK" ]; then
+    echo -e "⚠️ WARNING: Potential local system path detected in staged changes!"
+    echo -e "$LOCAL_PATH_LEAK" | head -n 3
+    read -p "Do you want to continue despite potential path leak? (y/N): " confirm
+    if [[ ! $confirm =~ ^[Yy]$ ]]; then
+        echo "Safety first. Commit aborted."
+        exit 1
+    fi
+fi
+
+echo -e "✅ Security pre-check passed."
 
 # Ask for commit message
-read -p "Enter commit message: " msg
+read -p "Enter commit message (Keep it generic/professional): " msg
 
 if [ -z "$msg" ]; then
-    msg="Update DroidWhisper"
+    msg="Refactor: codebase hardening and optimization"
 fi
 
-echo -e "\n📦 Committing changes..."
+echo -e "\n📦 Safe Committing..."
 git add .
 git commit -m "$msg"
 
-echo -e "\n🚀 Pushing to GitHub..."
+echo -e "\n🚀 Pushing to Secure Repository..."
 git push origin main
 
-echo -e "\n✨ Done!"
+echo -e "\n✨ Successfully Published."
