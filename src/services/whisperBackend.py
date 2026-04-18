@@ -101,7 +101,11 @@ def main():
             continue
 
         try:
-            segments, info = model.transcribe(audio_path, beam_size=5)
+            segments, info = model.transcribe(
+                audio_path, 
+                beam_size=5, 
+                condition_on_previous_text=False # Prevents 'and and and' loops
+            )
             text = " ".join([segment.text for segment in segments]).strip()
             print(json.dumps({"text": text}), flush=True)
         except Exception as e:
