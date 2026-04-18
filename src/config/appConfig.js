@@ -35,6 +35,17 @@ const config = {
   // OS Integration
   TYPING: {
     COMMAND: 'xdotool type --delay 5',
+  },
+
+  // Ollama & Prompt Engineering
+  OLLAMA: {
+      URL: 'https://ollama.com/api/chat',
+      MODEL: process.env.OLLAMA_MODEL || 'gpt-oss:120b',
+      API_KEY: process.env.OLLAMA_API_KEY,
+  },
+
+  PROMPT_ENGINEERING: {
+      SYSTEM_PROMPT: `You are a professional in this field. Convert the following transcription into a ready-to-use, professional prompt. Rephrase everything into technical detail and format it professionally for an AI model. Output ONLY the refined prompt.`
   }
 };
 

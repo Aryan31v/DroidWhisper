@@ -8,26 +8,30 @@
 
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
+require('dotenv').config();
 const scrcpyManager = require('./src/features/audio/scrcpyManager');
 const transcriptionBridge = require('./src/features/transcription/transcriptionBridge');
 const typingService = require('./src/features/interaction/typingService');
+const promptService = require('./src/features/interaction/promptService');
 
 let mainWindow;
 let isStarting = false;
 let isStopping = false;
+let currentMode = 'dictation';
 
-// Attach globally for the bridge to call back
-app.onWhisperEvent = async (event) => {
+app.onWhisperEvent = async (eventData) => {
+  const event = typeof eventData === 'string' ? eventData : eventData.event;
   console.log('Orchestrator Event:', event);
 
   if (event === 'recording_start') {
     if (isStarting || isStopping) return;
     isStarting = true;
-    console.log('Main: Starting recording flow...');
+    currentMode = eventData.mode || 'dictation';
+    console.log(`Main: Starting recording flow (Mode: ${currentMode})...`);
     try {
       await scrcpyManager.startRecording();
       if (mainWindow) {
-          mainWindow.webContents.send('status-change', 'Recording...');
+          mainWindow.webContents.send('status-change', currentMode === 'prompt' ? 'RECORDING (PROMPT)' : 'Recording...');
       }
     } finally {
       isStarting = false;
@@ -49,10 +53,20 @@ app.onWhisperEvent = async (event) => {
         const result = await transcriptionBridge.transcribe(audioFile);
       
       if (result.text) {
+          let textToType = result.text;
+          
+          if (currentMode === 'prompt') {
+              console.log('Main: Entering Prompt Engineering phase...');
+              if (mainWindow) {
+                  mainWindow.webContents.send('status-change', 'PROMPTING...');
+              }
+              textToType = await promptService.refinePrompt(result.text);
+          }
+
         if (mainWindow) {
-            mainWindow.webContents.send('status-change', 'Ready');
+            mainWindow.webContents.send('status-change', 'READY');
         }
-        await typingService.typeText(result.text);
+        await typingService.typeText(textToType);
       } else if (result.error) {
         console.error('Transcription Error:', result.error);
         if (mainWindow) {
