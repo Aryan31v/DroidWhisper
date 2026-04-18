@@ -106,8 +106,30 @@ def main():
                 beam_size=5, 
                 condition_on_previous_text=False # Prevents 'and and and' loops
             )
-            text = " ".join([segment.text for segment in segments]).strip()
-            print(json.dumps({"text": text}), flush=True)
+            
+            result_text = ""
+            last_end = 0
+            
+            for i, segment in enumerate(segments):
+                seg_text = segment.text.strip()
+                if not seg_text:
+                    continue
+                
+                # If there's a significant gap (> 0.6s) between segments, or it's the first segment,
+                # handle joining intelligently. 
+                if i == 0:
+                    result_text = seg_text
+                else:
+                    gap = segment.start - last_end
+                    # If gap is large, treat as a new paragraph/heading
+                    if gap > 0.6:
+                        result_text += "\n" + seg_text
+                    else:
+                        result_text += " " + seg_text
+                
+                last_end = segment.end
+                
+            print(json.dumps({"text": result_text.strip()}), flush=True)
         except Exception as e:
             print(json.dumps({"error": str(e)}), flush=True)
 
