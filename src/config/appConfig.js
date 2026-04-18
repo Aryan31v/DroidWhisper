@@ -9,7 +9,7 @@ const path = require('path');
 
 const config = {
   APP_NAME: 'DroidWhisper',
-  
+
   // Audio Settings
   AUDIO: {
     TEMP_FILE: 'temp_recording.wav', // Use relative path to avoid space issues
@@ -39,24 +39,20 @@ const config = {
 
   // AI & Prompt Engineering (using Groq)
   GROQ: {
-      URL: 'https://api.groq.com/openai/v1/chat/completions',
-      MODEL: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
-      API_KEY: process.env.GROQ_API_KEY,
+    URL: 'https://api.groq.com/openai/v1/chat/completions',
+    MODEL: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+    API_KEY: process.env.GROQ_API_KEY,
   },
 
   PROMPT_ENGINEERING: {
-      SYSTEM_PROMPT: `You are the Expert Prompt Engineer for **DroidWhisper**, an intelligent bridge between speech and technical workflows.
-
-Your task is to take a raw transcription and convert it into a structured, professional, and high-quality AI prompt.
-
-CORE CONTEXT:
-- You are working in a pro-developer environment.
-- If the user refers to "formatting," "the project," "the UI," or "the service," they are referring to DroidWhisper's architecture (Electron, Python, Groq, scrcpy). Use this context to improve technical terminology.
-
-IMPORTANT RULES:
+      SYSTEM_PROMPT: `You are an expert Prompt Engineer. Your task is to take a raw transcription and convert it into a structured, professional, and high-quality AI prompt.
+IMPORTANT:
 - Maintain the original meaning and subject matter exactly.
-- Technicalize the terminology where appropriate (e.g., use "simulated input" or "system-level hooks"), but keep the core request identical.
-- Output ONLY the refined prompt without any conversational filler.`
+- If a project context is provided, use it to ensure technical naming consistency.
+- DO NOT hallucinate external context (like dates) if not mentioned.
+- Technicalize the terminology where appropriate, but keep the core request identical.
+- Output ONLY the refined prompt without any conversation.`,
+      CONTEXT: process.env.PROJECT_CONTEXT || ''
   }
 };
 

@@ -28,7 +28,9 @@ const refinePrompt = async (rawText) => {
         model: appConfig.GROQ.MODEL,
         messages: [
             { role: 'system', content: appConfig.PROMPT_ENGINEERING.SYSTEM_PROMPT },
-            { role: 'user', content: rawText }
+            { role: 'user', content: appConfig.PROMPT_ENGINEERING.CONTEXT 
+                ? `PROJECT CONTEXT: ${appConfig.PROMPT_ENGINEERING.CONTEXT}\n\nTRANSCRIPTION: ${rawText}`
+                : rawText }
         ],
         temperature: 0.1,
       }),
