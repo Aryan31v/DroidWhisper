@@ -26,10 +26,14 @@ DroidWhisper is a local Speech-to-Text utility that uses an Android phone's micr
     - `styles/`: Global CSS.
 
 ## File Connections
-1. `main.js` initializes the Electron app and calls `hotkeyManager`.
-2. `hotkeyManager` listens for `Alt+S`.
-3. On KeyDown: `scrcpyManager` starts recording.
-4. On KeyUp: `scrcpyManager` stops and passes filename to `transcriptionBridge`.
-5. `transcriptionBridge` sends the path to `whisperBackend.py`.
-6. Result text is sent to `typingService`.
-7. `typingService` uses `xdotool` to input the text.
+1. `main.js` initializes the Electron app and starts the Whisper service.
+2. `whisperBackend.py` listens for the global hotkey (**Alt+CapsLock**).
+3. On KeyDown: `scrcpyManager` starts recording from Android via USB.
+4. On KeyUp: `scrcpyManager` stops and passes the filename to `transcriptionBridge`.
+5. `transcriptionBridge` sends the path back to `whisperBackend.py` for STT.
+6. The result text is sent to `typingService.js`.
+7. `typingService` uses `xdotool type --clearmodifiers` to input the text.
+
+## Universal Command
+The app can be launched from any terminal using:
+`droid-whisper`

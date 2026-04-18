@@ -18,6 +18,7 @@ from pynput import keyboard
 is_recording = False
 pressed_keys = set()
 last_release_time = 0
+kb_controller = keyboard.Controller()
 
 def on_press(key, signal_start):
     global is_recording

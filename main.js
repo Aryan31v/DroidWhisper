@@ -67,7 +67,8 @@ function createWindow() {
       contextIsolation: false,
     },
     frame: false,
-    transparent: true,
+    transparent: false,
+    backgroundColor: '#141419', // Solid dark background
     alwaysOnTop: true,
     resizable: false,
   });

@@ -24,7 +24,7 @@ const typeText = (text) => {
     .replace(/'/g, "'\\''")
     .replace(/\n/g, ' '); 
 
-  const command = `${appConfig.TYPING.COMMAND} "${escapedText}"`;
+  const command = `xdotool type --clearmodifiers --delay 5 "${escapedText}"`;
 
   console.log('Typing text...', command);
 
