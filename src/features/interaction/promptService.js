@@ -49,6 +49,47 @@ const refinePrompt = async (rawText) => {
   }
 };
 
+/**
+ * Polishes raw transcription without rephrasing (Smart Flow).
+ * Fixes punctuation, capitalization, and formatting.
+ * @param {string} rawText - The raw transcribed text.
+ * @returns {Promise<string>} The polished text.
+ */
+const cleanTranscription = async (rawText) => {
+  if (!rawText || rawText.length < 5) return rawText;
+
+  console.log('Polishing transcription using Smart Flow logic...');
+
+  try {
+    const headers = { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${appConfig.GROQ.API_KEY}`
+    };
+
+    const response = await fetch(appConfig.GROQ.URL, {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify({
+        model: appConfig.GROQ.MODEL,
+        messages: [
+            { role: 'system', content: appConfig.PROMPT_ENGINEERING.TRANSCRIPTION_CLEANUP_PROMPT },
+            { role: 'user', content: rawText }
+        ],
+        temperature: 0.0, // Maximum literal accuracy
+      }),
+    });
+
+    if (!response.ok) return rawText;
+
+    const data = await response.json();
+    return data.choices[0].message.content.trim();
+  } catch (err) {
+    console.error('Smart Flow Cleanup failed:', err);
+    return rawText;
+  }
+};
+
 module.exports = {
   refinePrompt,
+  cleanTranscription,
 };

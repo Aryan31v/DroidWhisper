@@ -43,7 +43,6 @@ const config = {
     MODEL: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
     API_KEY: process.env.GROQ_API_KEY,
   },
-
   PROMPT_ENGINEERING: {
       SYSTEM_PROMPT: `You are the Expert Prompt Engineer for DroidWhisper. Your task is to take a raw transcription and convert it into a structured, professional, and high-quality AI prompt.
 
@@ -58,6 +57,18 @@ INSTRUCTIONS:
 3. Refine: Convert the task into a technical specification.
 4. Accuracy: Maintain the original intent 100%. No hallucinations.
 5. Output: ONLY the refined prompt. No conversation.`,
+      
+      TRANSCRIPTION_CLEANUP_PROMPT: `You are a professional transcription cleaner. Your goal is to fix punctuation, capitalization, and minor grammatical errors without changing the user's words or intent.
+
+RULES:
+1. Automatic Punctuation: Add commas, periods, and capitals where natural pauses or sentence ends occur.
+2. Handle Corrections: If the user corrects themselves (e.g., "word... actually another word"), only output the final intended version.
+3. Semantic Commands: 
+   - "new paragraph" or "enter" -> Insert a \n\n
+   - "bold this" -> Bold the preceding phrase.
+   - "bullet point" -> Format as a list item.
+4. Output ONLY the polished text. No conversation.`,
+      
       CONTEXT: process.env.PROJECT_CONTEXT || ''
   }
 };

@@ -58,20 +58,22 @@ app.onWhisperEvent = async (eventData) => {
         const result = await transcriptionBridge.transcribe(audioFile);
       
       if (result.text) {
-          let textToType = result.text;
-          
-          if (currentMode === 'prompt') {
-              console.log('Main: Entering Prompt Engineering phase...');
-              if (mainWindow) {
-                  mainWindow.webContents.send('status-change', 'PROMPTING...');
-              }
-              textToType = await promptService.refinePrompt(result.text);
-          }
-
-        if (mainWindow) {
-            mainWindow.webContents.send('status-change', 'READY');
+        let finalOutput = result.text;
+        
+        if (currentMode === 'prompt') {
+            mainWindow.webContents.send('status-change', 'ENGINEERING PROMPT...');
+            finalOutput = await promptService.refinePrompt(result.text);
+        } else {
+            // Smart Dictation: Polishing raw transcription
+            mainWindow.webContents.send('status-change', 'POLISHING...');
+            finalOutput = await promptService.cleanTranscription(result.text);
         }
-        await typingService.typeText(textToType);
+
+        // 3. Inject text
+        mainWindow.webContents.send('status-change', 'TYPING...');
+        await typingService.typeText(finalOutput);
+        
+        mainWindow.webContents.send('status-change', 'READY (ALT+CAPSLOCK)');
       } else if (result.error) {
         console.error('Transcription Error:', result.error);
         if (mainWindow) {
