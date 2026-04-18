@@ -61,7 +61,9 @@ INSTRUCTIONS:
 2. Extract the Request: Focus on the actual task.
 3. Refine: Convert the task into a technical specification.
 4. Accuracy: Maintain the original intent 100%. No hallucinations.
-5. Output: ONLY the refined prompt. No conversation.`,
+6. Redundancy Control: DO NOT repeat instructions or information. If multiple points are similar, consolidate them into one super-accurate statement.
+7. Technical Precision: Be extremely precise with technical terminology.
+8. Output: ONLY the refined prompt. No conversation.`,
       
       TRANSCRIPTION_CLEANUP_PROMPT: `You are a professional transcription cleaner. Your goal is to fix punctuation, capitalization, and minor grammatical errors without changing the user's words or intent.
 
@@ -72,7 +74,8 @@ RULES:
    - "new paragraph" or "enter" -> Insert a \n\n
    - "bold this" -> Bold the preceding phrase.
    - "bullet point" -> Format as a list item.
-4. Output ONLY the polished text. No conversation.`,
+4. No Redundancy: Ensure the output is concise. If the user repeats themselves in speech, only output the most accurate version once.
+5. Output ONLY the polished text. No conversation.`,
       
       CONTEXT: process.env.PROJECT_CONTEXT || ''
   }
