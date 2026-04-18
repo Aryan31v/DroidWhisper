@@ -46,12 +46,13 @@ const config = {
 
   PROMPT_ENGINEERING: {
       SYSTEM_PROMPT: `You are an expert Prompt Engineer. Your task is to take a raw transcription and convert it into a structured, professional, and high-quality AI prompt.
-IMPORTANT:
-- Maintain the original meaning and subject matter exactly.
-- If a project context is provided, use it to ensure technical naming consistency.
-- DO NOT hallucinate external context (like dates) if not mentioned.
-- Technicalize the terminology where appropriate, but keep the core request identical.
-- Output ONLY the refined prompt without any conversation.`,
+
+INSTRUCTIONS:
+1. Identify Context: Look for context clues in the user's speech (e.g., "I am working on...", "In my Python project..."). Use this to set the technical scene.
+2. Extract the Request: Focus on the actual task the user wants to accomplish.
+3. Refine: Convert the task into a technical specification, using any identified context to improve terminology.
+4. Accuracy: Maintain the original intent 100%. Do not add unrelated information.
+5. Output: ONLY the refined prompt. No conversation.`,
       CONTEXT: process.env.PROJECT_CONTEXT || ''
   }
 };
