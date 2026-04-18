@@ -81,6 +81,17 @@ const module_exports = {
       console.warn('Could not fetch active window info:', err);
       return { app: 'Unknown', title: 'Unknown' };
     }
+  },
+  triggerPermissionProbe: async () => {
+    try {
+      console.log('Triggering Permission Probe (No-op keystroke)...');
+      // Trigger a harmless 'Shift' key tap to "wake up" the OS remote input permission dialog
+      await execAsync('xdotool key shift');
+      return true;
+    } catch (err) {
+      console.warn('Permission Probe failed (Expected if not yet authorized):', err);
+      return false;
+    }
   }
 };
 

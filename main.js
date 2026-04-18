@@ -20,11 +20,25 @@ let isStopping = false;
 let currentMode = 'dictation';
 let activeSelection = '';
 let activeApp = { app: 'Unknown', title: 'Unknown' };
+let lastOutput = ''; // BUFFER: Saves the last successful transcription for safety
 
 // Handle UI mode switching
 ipcMain.on('mode-switch', (event, mode) => {
   console.log('UI Mode Switched to:', mode);
   currentMode = mode;
+});
+
+// Handle Transcription Retry (if injection was blocked by permission prompt)
+ipcMain.on('retry-typing', async () => {
+  if (lastOutput) {
+    console.log('Main: Retrying injection of last transcription...');
+    await typingService.typeText(lastOutput);
+  }
+});
+
+// Trigger OS permission probe on startup
+ipcMain.on('trigger-permission-probe', async () => {
+    await typingService.triggerPermissionProbe();
 });
 
 app.onWhisperEvent = async (eventData) => {
@@ -86,6 +100,9 @@ app.onWhisperEvent = async (eventData) => {
             mainWindow.webContents.send('status-change', 'POLISHING...');
             finalOutput = await promptService.cleanTranscription(result.text, activeSelection, activeApp);
         }
+
+        // 2. Buffer for safety
+        lastOutput = finalOutput;
 
         // 3. Inject text
         mainWindow.webContents.send('status-change', 'TYPING...');
