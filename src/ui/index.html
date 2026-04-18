@@ -142,16 +142,17 @@
             </div>
         </div>
         <div id="status-label" class="status-text">STARTING...</div>
+        <div id="context-indicator" style="opacity: 0; color: #fbbf24; margin-left: 5px; font-size: 0.9rem; transition: opacity 0.3s ease;" title="Selection captured as context">🔗</div>
         <div class="hotkey">ALT+CAPS</div>
     </div>
 
     <script>
         const { ipcRenderer } = require('electron');
-        
         const statusLabel = document.getElementById('status-label');
-        const pill = document.getElementById('pill');
-        const modeToggle = document.getElementById('mode-toggle');
+        const contextIndicator = document.getElementById('context-indicator');
         const modeText = document.getElementById('mode-text');
+        const modeToggle = document.getElementById('mode-toggle');
+        const pill = document.getElementById('pill');
         
         let currentMode = 'dictation';
 
@@ -173,17 +174,28 @@
 
         ipcRenderer.on('status-change', (event, status) => {
             statusLabel.innerText = status;
+            const upperStatus = status.toUpperCase();
             
-            if (status.includes('Recording')) {
+            if (upperStatus.includes('RECORDING')) {
+                const isPrompt = upperStatus.includes('PROMPT');
                 pill.classList.add('recording');
-                pill.style.borderColor = 'var(--recording-color)';
-            } else if (status === 'READY') {
+                pill.style.borderColor = isPrompt ? 'var(--prompt-color)' : 'var(--accent-color)';
+                pill.style.boxShadow = isPrompt 
+                    ? '0 0 20px rgba(168, 85, 247, 0.4)' 
+                    : '0 0 20px rgba(0, 242, 254, 0.4)';
+            } else if (upperStatus.includes('READY')) {
                 pill.classList.remove('recording');
                 pill.style.borderColor = currentMode === 'prompt' ? 'var(--prompt-color)' : 'var(--accent-color)';
+                pill.style.boxShadow = 'none';
             } else {
                 pill.classList.remove('recording');
                 pill.style.borderColor = 'var(--solid-border)';
+                pill.style.boxShadow = 'none';
             }
+        });
+
+        ipcRenderer.on('context-captured', (event, captured) => {
+            contextIndicator.style.opacity = captured ? '1' : '0';
         });
     </script>
 </body>

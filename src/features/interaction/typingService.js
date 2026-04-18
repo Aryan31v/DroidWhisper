@@ -51,6 +51,18 @@ const typeText = async (text) => {
   }
 };
 
-module.exports = {
+const module_exports = {
   typeText,
+  getPrimarySelection: async () => {
+    try {
+      // Fetch the 'primary' selection (currently highlighted text in X11)
+      const { stdout } = await execAsync('xclip -selection primary -o').catch(() => ({ stdout: '' }));
+      return stdout.trim();
+    } catch (err) {
+      console.warn('Could not fetch primary selection:', err);
+      return '';
+    }
+  }
 };
+
+module.exports = module_exports;

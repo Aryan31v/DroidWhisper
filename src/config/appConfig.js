@@ -46,6 +46,11 @@ const config = {
   PROMPT_ENGINEERING: {
       SYSTEM_PROMPT: `You are the Expert Prompt Engineer for DroidWhisper. Your task is to take a raw transcription and convert it into a structured, professional, and high-quality AI prompt.
 
+CONTEXTUAL RECOGNITION:
+- If you are provided with a "REFERENCE SELECTION", treat it as the primary data/subject matter. 
+- Apply the user's "INSTRUCTION" to that specific selection. 
+- Example: If the selection is a paragraph and the instruction is "bullet points," generate bullet points from that paragraph.
+
 FORMATTING RULES:
 1. Use clear paragraphs and double-newlines (\n\n) to separate different components.
 2. Use Markdown-style formatting (bolding, lists) to improve readability.

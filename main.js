@@ -18,6 +18,7 @@ let mainWindow;
 let isStarting = false;
 let isStopping = false;
 let currentMode = 'dictation';
+let activeSelection = '';
 
 // Handle UI mode switching
 ipcMain.on('mode-switch', (event, mode) => {
@@ -32,6 +33,16 @@ app.onWhisperEvent = async (eventData) => {
   if (event === 'recording_start') {
     if (isStarting || isStopping) return;
     isStarting = true;
+    
+    // Capture the currently highlighted text as project context
+    activeSelection = await typingService.getPrimarySelection();
+    if (activeSelection && mainWindow) {
+        console.log('Main: Context Captured:', activeSelection.substring(0, 50) + '...');
+        mainWindow.webContents.send('context-captured', true);
+    } else if (mainWindow) {
+        mainWindow.webContents.send('context-captured', false);
+    }
+
     console.log(`Main: Starting recording flow (Mode: ${currentMode})...`);
     try {
       await scrcpyManager.startRecording();
@@ -62,11 +73,11 @@ app.onWhisperEvent = async (eventData) => {
         
         if (currentMode === 'prompt') {
             mainWindow.webContents.send('status-change', 'ENGINEERING PROMPT...');
-            finalOutput = await promptService.refinePrompt(result.text);
+            finalOutput = await promptService.refinePrompt(result.text, activeSelection);
         } else {
             // Smart Dictation: Polishing raw transcription
             mainWindow.webContents.send('status-change', 'POLISHING...');
-            finalOutput = await promptService.cleanTranscription(result.text);
+            finalOutput = await promptService.cleanTranscription(result.text, activeSelection);
         }
 
         // 3. Inject text
@@ -74,6 +85,7 @@ app.onWhisperEvent = async (eventData) => {
         await typingService.typeText(finalOutput);
         
         mainWindow.webContents.send('status-change', 'READY (ALT+CAPSLOCK)');
+        activeSelection = ''; // Reset selection context
       } else if (result.error) {
         console.error('Transcription Error:', result.error);
         if (mainWindow) {

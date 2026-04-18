@@ -8,10 +8,11 @@ const { appConfig } = require('../../config');
 /**
  * Sends raw text to Ollama for professional rephrasing.
  * @param {string} rawText - The raw transcribed text.
+ * @param {string} referenceText - Optional text highlighted by the user for context.
  * @returns {Promise<string>} The professionally refined prompt.
  */
-const refinePrompt = async (rawText) => {
-  if (!rawText || rawText.length < 5) return rawText;
+const refinePrompt = async (rawText, referenceText = '') => {
+  if (!rawText) return '';
 
   console.log(`Sending to Groq (${appConfig.GROQ.MODEL}) for professional processing...`);
 
@@ -21,6 +22,12 @@ const refinePrompt = async (rawText) => {
         'Authorization': `Bearer ${appConfig.GROQ.API_KEY}`
     };
 
+    const userMessage = referenceText 
+        ? `REFERENCE SELECTION:\n"""\n${referenceText}\n"""\n\nINSTRUCTION: ${rawText}`
+        : (appConfig.PROMPT_ENGINEERING.CONTEXT 
+            ? `PROJECT CONTEXT: ${appConfig.PROMPT_ENGINEERING.CONTEXT}\n\nTRANSCRIPTION: ${rawText}`
+            : rawText);
+
     const response = await fetch(appConfig.GROQ.URL, {
       method: 'POST',
       headers: headers,
@@ -28,9 +35,7 @@ const refinePrompt = async (rawText) => {
         model: appConfig.GROQ.MODEL,
         messages: [
             { role: 'system', content: appConfig.PROMPT_ENGINEERING.SYSTEM_PROMPT },
-            { role: 'user', content: appConfig.PROMPT_ENGINEERING.CONTEXT 
-                ? `PROJECT CONTEXT: ${appConfig.PROMPT_ENGINEERING.CONTEXT}\n\nTRANSCRIPTION: ${rawText}`
-                : rawText }
+            { role: 'user', content: userMessage }
         ],
         temperature: 0.1,
       }),
@@ -53,10 +58,11 @@ const refinePrompt = async (rawText) => {
  * Polishes raw transcription without rephrasing (Smart Flow).
  * Fixes punctuation, capitalization, and formatting.
  * @param {string} rawText - The raw transcribed text.
+ * @param {string} referenceText - Optional text highlighted by the user for context.
  * @returns {Promise<string>} The polished text.
  */
-const cleanTranscription = async (rawText) => {
-  if (!rawText || rawText.length < 5) return rawText;
+const cleanTranscription = async (rawText, referenceText = '') => {
+  if (!rawText) return '';
 
   console.log('Polishing transcription using Smart Flow logic...');
 
@@ -66,6 +72,10 @@ const cleanTranscription = async (rawText) => {
         'Authorization': `Bearer ${appConfig.GROQ.API_KEY}`
     };
 
+    const userMessage = referenceText
+        ? `REFERENCE SELECTION:\n"""\n${referenceText}\n"""\n\nINSTRUCTION: ${rawText}`
+        : rawText;
+
     const response = await fetch(appConfig.GROQ.URL, {
       method: 'POST',
       headers: headers,
@@ -73,7 +83,7 @@ const cleanTranscription = async (rawText) => {
         model: appConfig.GROQ.MODEL,
         messages: [
             { role: 'system', content: appConfig.PROMPT_ENGINEERING.TRANSCRIPTION_CLEANUP_PROMPT },
-            { role: 'user', content: rawText }
+            { role: 'user', content: userMessage }
         ],
         temperature: 0.0, // Maximum literal accuracy
       }),
