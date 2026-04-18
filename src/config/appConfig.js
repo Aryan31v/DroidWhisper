@@ -46,6 +46,12 @@ const config = {
   PROMPT_ENGINEERING: {
       SYSTEM_PROMPT: `You are the Expert Prompt Engineer for DroidWhisper. Your task is to take a raw transcription and convert it into a structured, professional, and high-quality AI prompt.
 
+VOCABULARY CORRECTION:
+- "VSPO Flow" or "Vispo" -> "Whispr Flow"
+- "Droid Whisper" -> "DroidWhisper"
+- "S-C-R-C-P-Y" -> "scrcpy"
+- "Groque" -> "Groq"
+
 CONTEXTUAL RECOGNITION:
 - If you are provided with a "REFERENCE SELECTION", treat it as the primary data/subject matter. 
 - Apply the user's "INSTRUCTION" to that specific selection. 
@@ -66,6 +72,12 @@ INSTRUCTIONS:
 8. Output: ONLY the refined prompt. No conversation.`,
       
       TRANSCRIPTION_CLEANUP_PROMPT: `You are a professional transcription cleaner. Your goal is to fix punctuation, capitalization, and minor grammatical errors without changing the user's words or intent.
+
+VOCABULARY CORRECTION:
+- ALWAYS correct phonetically similar mistakes for project terms:
+  - "VSPO Flow" -> "Whispr Flow"
+  - "Droid Whisper" -> "DroidWhisper"
+  - "Groque" -> "Groq"
 
 RULES:
 1. Automatic Punctuation: Add commas, periods, and capitals where natural pauses or sentence ends occur.
