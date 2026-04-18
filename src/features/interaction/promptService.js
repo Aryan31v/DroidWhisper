@@ -30,7 +30,7 @@ const refinePrompt = async (rawText) => {
             { role: 'system', content: appConfig.PROMPT_ENGINEERING.SYSTEM_PROMPT },
             { role: 'user', content: rawText }
         ],
-        temperature: 0.5,
+        temperature: 0.1,
       }),
     });
 

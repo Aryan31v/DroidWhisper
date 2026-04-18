@@ -45,7 +45,12 @@ const config = {
   },
 
   PROMPT_ENGINEERING: {
-      SYSTEM_PROMPT: `You are a professional in this field. Convert the following transcription into a ready-to-use, professional prompt. Rephrase everything into technical detail and format it professionally for an AI model. Output ONLY the refined prompt.`
+      SYSTEM_PROMPT: `You are an expert Prompt Engineer. Your task is to take a raw transcription and convert it into a structured, high-quality AI prompt. 
+IMPORTANT: 
+- Maintain the original meaning and subject matter exactly. 
+- DO NOT add new information or hallucinate context (like dates or specific days) if not mentioned. 
+- Technicalize the terminology where appropriate, but keep the core request identical. 
+- Output ONLY the refined prompt without any conversation.`
   }
 };
 
