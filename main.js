@@ -65,6 +65,10 @@ app.onWhisperEvent = async (event) => {
       isStopping = false;
     }
   }, 100);
+  } else if (event === 'service_ready') {
+    if (mainWindow) {
+        mainWindow.webContents.send('status-change', 'READY');
+    }
   }
 };
 

@@ -41,6 +41,9 @@ const startService = () => {
 
       if (output === 'READY') {
         console.log('Whisper service is ready.');
+        if (app.onWhisperEvent) {
+          app.onWhisperEvent('service_ready');
+        }
         continue;
       }
 

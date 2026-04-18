@@ -107,7 +107,7 @@
                 <div class="dot-inner"></div>
             </div>
         </div>
-        <div id="status-label" class="status-text">Ready</div>
+        <div id="status-label" class="status-text">STARTING...</div>
         <div class="hotkey">ALT+CAPS</div>
     </div>
 
@@ -123,6 +123,9 @@
             if (status.includes('Recording')) {
                 pill.classList.add('recording');
                 pill.style.borderColor = 'var(--recording-color)';
+            } else if (status === 'READY') {
+                pill.classList.remove('recording');
+                pill.style.borderColor = 'var(--accent-color)';
             } else {
                 pill.classList.remove('recording');
                 pill.style.borderColor = 'var(--solid-border)';
