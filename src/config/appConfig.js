@@ -37,11 +37,11 @@ const config = {
     COMMAND: 'xdotool type --delay 5',
   },
 
-  // Ollama & Prompt Engineering
-  OLLAMA: {
-      URL: 'https://ollama.com/api/chat',
-      MODEL: process.env.OLLAMA_MODEL || 'gpt-oss:120b',
-      API_KEY: process.env.OLLAMA_API_KEY,
+  // AI & Prompt Engineering (using Groq)
+  GROQ: {
+      URL: 'https://api.groq.com/openai/v1/chat/completions',
+      MODEL: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+      API_KEY: process.env.GROQ_API_KEY,
   },
 
   PROMPT_ENGINEERING: {

@@ -13,36 +13,37 @@ const { appConfig } = require('../../config');
 const refinePrompt = async (rawText) => {
   if (!rawText || rawText.length < 5) return rawText;
 
-  console.log(`Sending to Ollama Cloud (${appConfig.OLLAMA.MODEL})...`);
+  console.log(`Sending to Groq (${appConfig.GROQ.MODEL}) for professional processing...`);
 
   try {
-    const headers = { 'Content-Type': 'application/json' };
-    if (appConfig.OLLAMA.API_KEY) {
-        headers['Authorization'] = `Bearer ${appConfig.OLLAMA.API_KEY}`;
-    }
+    const headers = { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${appConfig.GROQ.API_KEY}`
+    };
 
-    const response = await fetch(appConfig.OLLAMA.URL, {
+    const response = await fetch(appConfig.GROQ.URL, {
       method: 'POST',
       headers: headers,
       body: JSON.stringify({
-        model: appConfig.OLLAMA.MODEL,
+        model: appConfig.GROQ.MODEL,
         messages: [
-            { role: 'user', content: `${appConfig.PROMPT_ENGINEERING.SYSTEM_PROMPT}\n\nTRANSCRIPTION: "${rawText}"` }
+            { role: 'system', content: appConfig.PROMPT_ENGINEERING.SYSTEM_PROMPT },
+            { role: 'user', content: rawText }
         ],
-        stream: false,
+        temperature: 0.5,
       }),
     });
 
     if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
-        throw new Error(`Ollama Cloud error: ${response.status} ${errData.error || response.statusText}`);
+        throw new Error(`Groq API error: ${response.status} ${errData.error?.message || response.statusText}`);
     }
 
     const data = await response.json();
-    return data.message.content.trim();
+    return data.choices[0].message.content.trim();
   } catch (err) {
-    console.error('Prompt Engineering failed:', err);
-    return rawText; // Fallback to raw text if AI fails
+    console.error('Groq Prompt Engineering failed:', err);
+    return rawText;
   }
 };
 

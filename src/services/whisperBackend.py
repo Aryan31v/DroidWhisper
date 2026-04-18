@@ -16,27 +16,24 @@ from pynput import keyboard
 
 # State management
 is_recording = False
-use_prompt_mode = False
 pressed_keys = set()
 hotkey_latched = False # Prevents re-triggering while keys are held
 kb_controller = keyboard.Controller()
 
 def on_press(key, signal_start, signal_stop):
-    global is_recording, hotkey_latched, use_prompt_mode
+    global is_recording, hotkey_latched
     pressed_keys.add(key)
     
     # Check for Alt + CapsLock
     has_alt = any(k in (keyboard.Key.alt, keyboard.Key.alt_l, keyboard.Key.alt_r) for k in pressed_keys)
     has_caps = keyboard.Key.caps_lock in pressed_keys
-    has_shift = any(k in (keyboard.Key.shift, keyboard.Key.shift_l, keyboard.Key.shift_r) for k in pressed_keys)
     
     if (has_alt and has_caps) or (key == keyboard.Key.f8):
         if not hotkey_latched:
             hotkey_latched = True
             if not is_recording:
                 is_recording = True
-                use_prompt_mode = has_shift
-                signal_start(use_prompt_mode)
+                signal_start()
             else:
                 is_recording = False
                 signal_stop()
@@ -80,8 +77,8 @@ def main():
     
     print("READY", flush=True)
 
-    def signal_start(prompt_mode=False):
-        print(json.dumps({"event": "recording_start", "mode": "prompt" if prompt_mode else "dictation"}), flush=True)
+    def signal_start():
+        print(json.dumps({"event": "recording_start"}), flush=True)
 
     def signal_stop():
         print(json.dumps({"event": "recording_stop"}), flush=True)

@@ -19,6 +19,12 @@ let isStarting = false;
 let isStopping = false;
 let currentMode = 'dictation';
 
+// Handle UI mode switching
+ipcMain.on('mode-switch', (event, mode) => {
+  console.log('UI Mode Switched to:', mode);
+  currentMode = mode;
+});
+
 app.onWhisperEvent = async (eventData) => {
   const event = typeof eventData === 'string' ? eventData : eventData.event;
   console.log('Orchestrator Event:', event);
@@ -26,7 +32,6 @@ app.onWhisperEvent = async (eventData) => {
   if (event === 'recording_start') {
     if (isStarting || isStopping) return;
     isStarting = true;
-    currentMode = eventData.mode || 'dictation';
     console.log(`Main: Starting recording flow (Mode: ${currentMode})...`);
     try {
       await scrcpyManager.startRecording();

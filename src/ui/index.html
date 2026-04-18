@@ -8,6 +8,7 @@
         :root {
             --bg-color: #141419;
             --accent-color: #00f2fe;
+            --prompt-color: #a855f7;
             --recording-color: #f5576c;
             --text-color: #ffffff;
             --solid-border: #33333a;
@@ -38,6 +39,36 @@
             padding: 0 16px;
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.8);
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .mode-toggle {
+            cursor: pointer;
+            -webkit-app-region: no-drag;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 4px 10px;
+            margin-right: 12px;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            color: var(--accent-color);
+            border: 1px solid rgba(0, 242, 254, 0.2);
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .mode-toggle:hover {
+            background: rgba(0, 242, 254, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .mode-toggle.prompt-mode {
+            color: var(--prompt-color);
+            border-color: rgba(168, 85, 247, 0.3);
+        }
+
+        .mode-toggle.prompt-mode:hover {
+            background: rgba(168, 85, 247, 0.1);
         }
 
         .status-dot {
@@ -102,6 +133,9 @@
 </head>
 <body>
     <div id="pill" class="pill">
+        <div class="mode-toggle" id="mode-toggle" title="Click to switch mode">
+            <span id="mode-text">DICT</span>
+        </div>
         <div class="status-dot">
             <div class="dot">
                 <div class="dot-inner"></div>
@@ -116,6 +150,26 @@
         
         const statusLabel = document.getElementById('status-label');
         const pill = document.getElementById('pill');
+        const modeToggle = document.getElementById('mode-toggle');
+        const modeText = document.getElementById('mode-text');
+        
+        let currentMode = 'dictation';
+
+        // Notify main process of initial mode
+        ipcRenderer.send('mode-switch', currentMode);
+
+        modeToggle.addEventListener('click', () => {
+            currentMode = currentMode === 'dictation' ? 'prompt' : 'dictation';
+            modeText.innerText = currentMode === 'dictation' ? 'DICT' : 'PROMPT';
+            
+            if (currentMode === 'prompt') {
+                modeToggle.classList.add('prompt-mode');
+            } else {
+                modeToggle.classList.remove('prompt-mode');
+            }
+            
+            ipcRenderer.send('mode-switch', currentMode);
+        });
 
         ipcRenderer.on('status-change', (event, status) => {
             statusLabel.innerText = status;
@@ -125,7 +179,7 @@
                 pill.style.borderColor = 'var(--recording-color)';
             } else if (status === 'READY') {
                 pill.classList.remove('recording');
-                pill.style.borderColor = 'var(--accent-color)';
+                pill.style.borderColor = currentMode === 'prompt' ? 'var(--prompt-color)' : 'var(--accent-color)';
             } else {
                 pill.classList.remove('recording');
                 pill.style.borderColor = 'var(--solid-border)';
