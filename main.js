@@ -13,18 +13,28 @@ const transcriptionBridge = require('./src/features/transcription/transcriptionB
 const typingService = require('./src/features/interaction/typingService');
 
 let mainWindow;
+let isStarting = false;
+let isStopping = false;
 
 // Attach globally for the bridge to call back
 app.onWhisperEvent = async (event) => {
   console.log('Orchestrator Event:', event);
 
   if (event === 'recording_start') {
+    if (isStarting || isStopping) return;
+    isStarting = true;
     console.log('Main: Starting recording flow...');
-    await scrcpyManager.startRecording();
-    if (mainWindow) {
-        mainWindow.webContents.send('status-change', 'Recording...');
+    try {
+      await scrcpyManager.startRecording();
+      if (mainWindow) {
+          mainWindow.webContents.send('status-change', 'Recording...');
+      }
+    } finally {
+      isStarting = false;
     }
   } else if (event === 'recording_stop') {
+    if (isStopping) return;
+    isStopping = true;
     console.log('Main: Stopping recording and transcribing...');
     if (mainWindow) {
         mainWindow.webContents.send('status-change', 'Transcribing...');
@@ -51,6 +61,8 @@ app.onWhisperEvent = async (event) => {
       }
     } catch (err) {
       console.error('Error in orchestrator:', err);
+    } finally {
+      isStopping = false;
     }
   }, 100);
   }
