@@ -9,18 +9,24 @@ const { appConfig } = require('../../config');
  * Sends raw text to Ollama for professional rephrasing.
  * @param {string} rawText - The raw transcribed text.
  * @param {string} referenceText - Optional text highlighted by the user for context.
+ * @param {Object} appContext - { app, title }
  * @returns {Promise<string>} The professionally refined prompt.
  */
-const refinePrompt = async (rawText, referenceText = '') => {
+const refinePrompt = async (rawText, referenceText = '', appContext = { app: 'Unknown', title: 'Unknown' }) => {
   if (!rawText) return '';
 
-  console.log(`Sending to Groq (${appConfig.GROQ.MODEL}) for professional processing...`);
+  console.log(`Processing with App Context: ${appContext.app} | Selection: ${!!referenceText}`);
 
   try {
     const headers = { 
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${appConfig.GROQ.API_KEY}`
     };
+
+    // Inject App Context into System Prompt
+    const systemPrompt = appConfig.PROMPT_ENGINEERING.SYSTEM_PROMPT
+        .replace(/{{APP_NAME}}/g, appContext.app)
+        .replace(/{{WINDOW_TITLE}}/g, appContext.title);
 
     const userMessage = referenceText 
         ? `REFERENCE SELECTION:\n"""\n${referenceText}\n"""\n\nINSTRUCTION: ${rawText}`
@@ -34,7 +40,7 @@ const refinePrompt = async (rawText, referenceText = '') => {
       body: JSON.stringify({
         model: appConfig.GROQ.MODEL,
         messages: [
-            { role: 'system', content: appConfig.PROMPT_ENGINEERING.SYSTEM_PROMPT },
+            { role: 'system', content: systemPrompt },
             { role: 'user', content: userMessage }
         ],
         temperature: 0.1,
@@ -59,18 +65,24 @@ const refinePrompt = async (rawText, referenceText = '') => {
  * Fixes punctuation, capitalization, and formatting.
  * @param {string} rawText - The raw transcribed text.
  * @param {string} referenceText - Optional text highlighted by the user for context.
+ * @param {Object} appContext - { app, title }
  * @returns {Promise<string>} The polished text.
  */
-const cleanTranscription = async (rawText, referenceText = '') => {
+const cleanTranscription = async (rawText, referenceText = '', appContext = { app: 'Unknown', title: 'Unknown' }) => {
   if (!rawText) return '';
 
-  console.log('Polishing transcription using Smart Flow logic...');
+  console.log('Polishing transcription using App-Aware Smart Flow...');
 
   try {
     const headers = { 
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${appConfig.GROQ.API_KEY}`
     };
+
+    // Inject App Context into System Prompt
+    const systemPrompt = appConfig.PROMPT_ENGINEERING.TRANSCRIPTION_CLEANUP_PROMPT
+        .replace(/{{APP_NAME}}/g, appContext.app)
+        .replace(/{{WINDOW_TITLE}}/g, appContext.title);
 
     const userMessage = referenceText
         ? `REFERENCE SELECTION:\n"""\n${referenceText}\n"""\n\nINSTRUCTION: ${rawText}`
@@ -82,7 +94,7 @@ const cleanTranscription = async (rawText, referenceText = '') => {
       body: JSON.stringify({
         model: appConfig.GROQ.MODEL,
         messages: [
-            { role: 'system', content: appConfig.PROMPT_ENGINEERING.TRANSCRIPTION_CLEANUP_PROMPT },
+            { role: 'system', content: systemPrompt },
             { role: 'user', content: userMessage }
         ],
         temperature: 0.0, // Maximum literal accuracy

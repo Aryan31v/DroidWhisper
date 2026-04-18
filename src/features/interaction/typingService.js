@@ -62,6 +62,25 @@ const module_exports = {
       console.warn('Could not fetch primary selection:', err);
       return '';
     }
+  },
+  getActiveWindowInfo: async () => {
+    try {
+      // Get the active window ID
+      const { stdout: windowId } = await execAsync('xdotool getactivewindow').catch(() => ({ stdout: '' }));
+      if (!windowId.trim()) return { app: 'Unknown', title: 'Unknown' };
+
+      // Get Window Name (Title) and Window Class (App Name)
+      const { stdout: title } = await execAsync(`xdotool getwindowname ${windowId.trim()}`).catch(() => ({ stdout: 'Unknown' }));
+      const { stdout: className } = await execAsync(`xdotool getwindowclassname ${windowId.trim()}`).catch(() => ({ stdout: 'Unknown' }));
+
+      return {
+        app: className.trim(),
+        title: title.trim()
+      };
+    } catch (err) {
+      console.warn('Could not fetch active window info:', err);
+      return { app: 'Unknown', title: 'Unknown' };
+    }
   }
 };
 

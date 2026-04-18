@@ -19,6 +19,7 @@ let isStarting = false;
 let isStopping = false;
 let currentMode = 'dictation';
 let activeSelection = '';
+let activeApp = { app: 'Unknown', title: 'Unknown' };
 
 // Handle UI mode switching
 ipcMain.on('mode-switch', (event, mode) => {
@@ -34,10 +35,16 @@ app.onWhisperEvent = async (eventData) => {
     if (isStarting || isStopping) return;
     isStarting = true;
     
-    // Capture the currently highlighted text as project context
+    // 1. Capture contextual information
     activeSelection = await typingService.getPrimarySelection();
+    activeApp = await typingService.getActiveWindowInfo();
+    
+    console.log('Main: Context Snapshot:', {
+        app: activeApp.app,
+        selection: activeSelection ? activeSelection.substring(0, 30) + '...' : 'None'
+    });
+
     if (activeSelection && mainWindow) {
-        console.log('Main: Context Captured:', activeSelection.substring(0, 50) + '...');
         mainWindow.webContents.send('context-captured', true);
     } else if (mainWindow) {
         mainWindow.webContents.send('context-captured', false);
@@ -73,11 +80,11 @@ app.onWhisperEvent = async (eventData) => {
         
         if (currentMode === 'prompt') {
             mainWindow.webContents.send('status-change', 'ENGINEERING PROMPT...');
-            finalOutput = await promptService.refinePrompt(result.text, activeSelection);
+            finalOutput = await promptService.refinePrompt(result.text, activeSelection, activeApp);
         } else {
             // Smart Dictation: Polishing raw transcription
             mainWindow.webContents.send('status-change', 'POLISHING...');
-            finalOutput = await promptService.cleanTranscription(result.text, activeSelection);
+            finalOutput = await promptService.cleanTranscription(result.text, activeSelection, activeApp);
         }
 
         // 3. Inject text
@@ -86,6 +93,7 @@ app.onWhisperEvent = async (eventData) => {
         
         mainWindow.webContents.send('status-change', 'READY (ALT+CAPSLOCK)');
         activeSelection = ''; // Reset selection context
+        activeApp = { app: 'Unknown', title: 'Unknown' }; // Reset app context
       } else if (result.error) {
         console.error('Transcription Error:', result.error);
         if (mainWindow) {

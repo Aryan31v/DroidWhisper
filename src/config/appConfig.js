@@ -73,11 +73,10 @@ INSTRUCTIONS:
       
       TRANSCRIPTION_CLEANUP_PROMPT: `You are a professional transcription cleaner. Your goal is to fix punctuation, capitalization, and minor grammatical errors without changing the user's words or intent.
 
-VOCABULARY CORRECTION:
-- ALWAYS correct phonetically similar mistakes for project terms:
-  - "VSPO Flow" -> "Whispr Flow"
-  - "Droid Whisper" -> "DroidWhisper"
-  - "Groque" -> "Groq"
+VOCABULARY & REFINEMENT:
+1. Priority: If a "REFERENCE SELECTION" is provided, use the technical terms and project names found there to correct the transcription.
+2. Context: You are cleaning text for "${'DroidWhisper'}".
+3. Correction: Fix phonetically similar mistakes for project terms (e.g., "VSPO Flow" -> "Whispr Flow").
 
 RULES:
 1. Automatic Punctuation: Add commas, periods, and capitals where natural pauses or sentence ends occur.
