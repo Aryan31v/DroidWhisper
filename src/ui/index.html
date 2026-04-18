@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DroidWhisper</title>
+    <style>
+        :root {
+            --bg-color: rgba(20, 20, 25, 0.85);
+            --accent-color: #00f2fe;
+            --recording-color: #f5576c;
+            --text-color: #ffffff;
+            --glass-border: rgba(255, 255, 255, 0.15);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', 'Inter', system-ui, sans-serif;
+            background: transparent;
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            -webkit-app-region: drag;
+            overflow: hidden;
+        }
+
+        .pill {
+            width: 320px;
+            height: 48px;
+            background: var(--bg-color);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--accent-color);
+            transition: all 0.3s ease;
+        }
+
+        .pill.recording .dot {
+            background: var(--recording-color);
+            box-shadow: 0 0 15px var(--recording-color);
+            transform: scale(1.5);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; transform: scale(1.2); }
+            50% { opacity: 0.5; transform: scale(1.5); }
+            100% { opacity: 1; transform: scale(1.2); }
+        }
+
+        .status-text {
+            flex-grow: 1;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .hotkey {
+            font-size: 0.65rem;
+            opacity: 0.4;
+            font-weight: 500;
+            padding-left: 8px;
+            border-left: 1px solid rgba(255,255,255,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div id="pill" class="pill">
+        <div class="status-dot">
+            <div class="dot"></div>
+        </div>
+        <div id="status-label" class="status-text">Ready</div>
+        <div class="hotkey">Alt+Caps</div>
+    </div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+        
+        const statusLabel = document.getElementById('status-label');
+        const pill = document.getElementById('pill');
+
+        ipcRenderer.on('status-change', (event, status) => {
+            statusLabel.innerText = status;
+            
+            if (status.includes('Recording')) {
+                pill.classList.add('recording');
+            } else {
+                pill.classList.remove('recording');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "droid-whisper",
+  "version": "1.0.0",
+  "description": "Local Speech-to-Text utility using Android mic via scrcpy",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "electron": "^31.0.0",
+    "dotenv": "^16.4.5"
+  }
+}

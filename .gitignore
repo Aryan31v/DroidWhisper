@@ -1,0 +1,5 @@
+node_modules/
+.venv/
+temp_recording.wav
+*.wav
+__pycache__/
