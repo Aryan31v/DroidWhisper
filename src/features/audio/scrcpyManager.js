@@ -1,97 +1,82 @@
-/**
- * scrcpyManager.js
- * Manages the scrcpy process to capture audio from the Android device.
- * Exports: startRecording, stopRecording functions.
- * Dependencies: child_process.
- * Used by: main.js or hotkeyManager.
- */
-
 const { spawn } = require('child_process');
 const { appConfig } = require('../../config');
 const fs = require('fs');
 const path = require('path');
+const EventEmitter = require('events');
 
-let scrcpyProcess = null;
-
-/**
- * Starts scrcpy in audio-only recording mode.
- * @returns {Promise<void>}
- */
-const startRecording = async () => {
-  if (scrcpyProcess) {
-    console.warn('scrcpy is already running.');
-    return;
+class ScrcpyManager extends EventEmitter {
+  constructor() {
+    super();
+    this.scrcpyProcess = null;
+    this.fileStream = null;
   }
 
-  // Ensure any existing temp file is removed
-  const absolutePath = path.resolve(process.cwd(), appConfig.AUDIO.TEMP_FILE);
-  if (fs.existsSync(absolutePath)) {
-    try {
-      fs.unlinkSync(absolutePath);
-    } catch (err) {
-      console.error('Failed to remove old temp file:', err);
-    }
-  }
+  /**
+   * Starts scrcpy in audio-only recording mode.
+   * Outputs raw PCM to stdout for analysis.
+   */
+  async startRecording() {
+    if (this.scrcpyProcess) return;
 
-  const args = [
-    '--no-video',
-    `--audio-source=${appConfig.AUDIO.AUDIO_SOURCE}`,
-    '--audio-codec=raw',
-    `--record=${absolutePath}`,
-    '--no-window',
-    '--no-control',
-    '--no-audio-playback',
-  ];
+    const absolutePath = path.resolve(process.cwd(), appConfig.AUDIO.TEMP_FILE);
+    if (fs.existsSync(absolutePath)) fs.unlinkSync(absolutePath);
 
-  console.log('Starting scrcpy recording...', args.join(' '));
-  
-  scrcpyProcess = spawn(appConfig.AUDIO.SC_RC_PY_PATH, args);
+    // Write to a file manually while piping for analysis
+    this.fileStream = fs.createWriteStream(absolutePath);
 
-  scrcpyProcess.stdout.on('data', (data) => {
-    console.log('[scrcpy stdout]', data.toString().trim());
-  });
+    const args = [
+      '--no-video',
+      `--audio-source=${appConfig.AUDIO.AUDIO_SOURCE}`,
+      '--audio-codec=raw',
+      '--audio-output-format=raw', // New: raw PCM to stdout
+      '--no-window',
+      '--no-control',
+      '--no-audio-playback',
+      '-', // Output to stdout
+    ];
 
-  scrcpyProcess.stderr.on('data', (data) => {
-    console.error('[scrcpy stderr]', data.toString().trim());
-  });
+    console.log('Starting scrcpy audio analysis stream...');
+    this.scrcpyProcess = spawn(appConfig.AUDIO.SC_RC_PY_PATH, args);
 
-  scrcpyProcess.on('error', (err) => {
-    console.error('Failed to start scrcpy:', err);
-    scrcpyProcess = null;
-  });
+    this.scrcpyProcess.stdout.on('data', (chunk) => {
+      // 1. Save to file for Whisper
+      if (this.fileStream) this.fileStream.write(chunk);
 
-  return new Promise((resolve, reject) => {
-    // We give it a slightly larger head start (800ms) to ensure audio buffers stabilize
-    setTimeout(resolve, 800);
-  });
-};
-
-/**
- * Stops the scrcpy process, saving the recording.
- * @returns {Promise<string>} Path to the recorded file.
- */
-const stopRecording = async () => {
-  if (!scrcpyProcess) {
-    console.warn('scrcpy was not running.');
-    return null;
-  }
-
-  console.log('Stopping scrcpy...');
-  
-  const absolutePath = path.resolve(process.cwd(), appConfig.AUDIO.TEMP_FILE);
-  return new Promise((resolve) => {
-    scrcpyProcess.on('close', () => {
-      console.log('scrcpy recording finished.');
-      scrcpyProcess = null;
-      resolve(absolutePath);
+      // 2. Calculate RMS (Volume) for UI Waveform
+      // Raw PCM 16-bit LE (scrcpy default)
+      let sum = 0;
+      for (let i = 0; i < chunk.length; i += 2) {
+        if (i + 1 >= chunk.length) break;
+        const sample = chunk.readInt16LE(i);
+        sum += sample * sample;
+      }
+      const rms = Math.sqrt(sum / (chunk.length / 2));
+      const level = Math.min(rms / 32768, 1); // Normalize to 0-1
+      
+      this.emit('audio-level', level);
     });
 
-    // Send SIGINT to stop recording cleanly
-    scrcpyProcess.kill('SIGINT');
-  });
-};
+    this.scrcpyProcess.stderr.on('data', (data) => {
+      console.error('[scrcpy]', data.toString().trim());
+    });
 
-module.exports = {
-  startRecording,
-  stopRecording,
-};
+    return new Promise((resolve) => {
+      setTimeout(resolve, 800);
+    });
+  }
+
+  async stopRecording() {
+    if (!this.scrcpyProcess) return null;
+
+    return new Promise((resolve) => {
+      this.scrcpyProcess.on('close', () => {
+        if (this.fileStream) this.fileStream.end();
+        this.scrcpyProcess = null;
+        resolve(path.resolve(process.cwd(), appConfig.AUDIO.TEMP_FILE));
+      });
+      this.scrcpyProcess.kill('SIGINT');
+    });
+  }
+}
+
+module.exports = new ScrcpyManager();

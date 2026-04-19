@@ -212,7 +212,6 @@
         <div id="status-label" class="status-text">STARTING...</div>
         <div id="history-btn" class="history-btn" title="Re-inject last transcription (Use if first attempt failed)">🕒</div>
         <div id="context-indicator" style="opacity: 0; color: #fbbf24; margin-left: 5px; font-size: 0.9rem; transition: opacity 0.3s ease;" title="Selection captured as context">🔗</div>
-        <div class="hotkey">ALT+CAPS</div>
     </div>
 
     <script>
@@ -226,51 +225,20 @@
         const bars = document.querySelectorAll('.bar');
         
         let currentMode = 'dictation';
-        let audioContext, analyser, dataArray, source, animationId;
 
-        async function startVisualizer() {
-            try {
-                // To avoid multiple triggers
-                if (audioContext && audioContext.state !== 'closed') return;
+        // v16.0: True Phone-Aware Visualizer
+        // Reacts to volume levels coming directly from scrcpy stream
+        ipcRenderer.on('vocal-level', (event, level) => {
+            // Apply level to all bars with slight randomization for organic feel
+            bars.forEach((bar, i) => {
+                const variance = Math.sin(Date.now() / 100 + i) * 0.2;
+                const scale = (level * 3) + 0.5 + variance;
+                bar.style.transform = `scaleY(${Math.max(0.5, Math.min(scale, 3.5))})`;
+                bar.style.opacity = Math.max(0.4, Math.min(level * 2, 1));
+            });
+        });
 
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                analyser = audioContext.createAnalyser();
-                source = audioContext.createMediaStreamSource(stream);
-                source.connect(analyser);
-
-                analyser.fftSize = 64; 
-                const bufferLength = analyser.frequencyBinCount;
-                dataArray = new Uint8Array(bufferLength);
-
-                const animate = () => {
-                    analyser.getFrequencyData ? analyser.getByteFrequencyData(dataArray) : null;
-                    if (analyser.getByteFrequencyData) analyser.getByteFrequencyData(dataArray);
-
-                    // Map frequency data to our 12 bars
-                    bars.forEach((bar, i) => {
-                        const index = i % bufferLength;
-                        const value = dataArray[index];
-                        const scale = (value / 128.0) * 1.5 + 0.5; // Responsive scaling
-                        bar.style.transform = `scaleY(${Math.min(scale, 3.5)})`;
-                        bar.style.opacity = Math.min((value / 128.0) + 0.4, 1);
-                    });
-                    animationId = requestAnimationFrame(animate);
-                };
-                animate();
-            } catch (err) {
-                console.error('Visualizer error:', err);
-            }
-        }
-
-        function stopVisualizer() {
-            if (animationId) cancelAnimationFrame(animationId);
-            if (source && source.mediaStream) {
-                source.mediaStream.getTracks().forEach(t => t.stop());
-            }
-            if (audioContext) audioContext.close().catch(() => {});
-            
-            // Reset bars to resting state
+        function resetWaveform() {
             bars.forEach(bar => {
                 bar.style.transform = 'scaleY(1)';
                 bar.style.opacity = '0.4';
@@ -315,23 +283,20 @@
                 pill.style.boxShadow = isPrompt 
                     ? '0 0 20px rgba(168, 85, 247, 0.4)' 
                     : '0 0 20px rgba(0, 242, 254, 0.4)';
-                
-                startVisualizer();
             } else if (upperStatus.includes('READY')) {
                 pill.classList.remove('recording');
                 pill.style.borderColor = currentMode === 'prompt' ? 'var(--prompt-color)' : 'var(--accent-color)';
                 pill.style.boxShadow = 'none';
                 historyBtn.classList.add('active');
-                
-                stopVisualizer();
+                resetWaveform();
             } else if (upperStatus.includes('TYPING')) {
                 historyBtn.classList.add('active');
-                stopVisualizer();
+                resetWaveform();
             } else {
                 pill.classList.remove('recording');
                 pill.style.borderColor = 'var(--solid-border)';
                 pill.style.boxShadow = 'none';
-                stopVisualizer();
+                resetWaveform();
             }
         });
 

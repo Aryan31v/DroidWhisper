@@ -168,6 +168,13 @@ app.whenReady().then(() => {
   createWindow();
   transcriptionBridge.startService();
 
+  // v16.0: Forward True Audio Levels from scrcpy to the UI Visualizer
+  scrcpyManager.on('audio-level', (level) => {
+    if (mainWindow) {
+        mainWindow.webContents.send('vocal-level', level);
+    }
+  });
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
