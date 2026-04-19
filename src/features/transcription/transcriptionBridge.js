@@ -9,9 +9,11 @@
 const { spawn } = require('child_process');
 const { app } = require('electron');
 const { appConfig } = require('../../config');
+const fs = require('fs');
 
 let whisperProcess = null;
 let resolvePromise = null;
+let transcriptionTimeout = null;
 
 /**
  * Starts the Python Whisper service.
@@ -90,7 +92,35 @@ const transcribe = (audioPath) => {
   }
 
   return new Promise((resolve) => {
-    resolvePromise = resolve;
+    // 1. Guard: Check if file is too small (empty/accidental press)
+    try {
+        const stats = fs.statSync(audioPath);
+        if (stats.size < 1000) { // Less than ~1KB (approx 4ms of audio)
+            console.log('Bridge: Audio file too small, skipping transcription.');
+            resolve({ text: '', info: 'empty' });
+            return;
+        }
+    } catch (e) {
+        console.error('Bridge: Could not stat audio file:', e);
+        resolve({ error: 'File read error' });
+        return;
+    }
+
+    // 2. Set safety timeout (20s)
+    if (transcriptionTimeout) clearTimeout(transcriptionTimeout);
+    transcriptionTimeout = setTimeout(() => {
+        if (resolvePromise) {
+            console.warn('Bridge: Transcription TIMEOUT reached.');
+            resolve({ error: 'Timeout' });
+            resolvePromise = null;
+        }
+    }, 20000);
+
+    resolvePromise = (res) => {
+        if (transcriptionTimeout) clearTimeout(transcriptionTimeout);
+        resolve(res);
+    };
+
     whisperProcess.stdin.write(audioPath + '\n');
   });
 };

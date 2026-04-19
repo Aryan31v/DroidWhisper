@@ -101,9 +101,14 @@ app.onWhisperEvent = async (eventData) => {
             mainWindow.webContents.send('status-change', 'ENGINEERING PROMPT...');
             finalOutput = await promptService.refinePrompt(result.text, activeSelection, activeApp);
         } else {
-            // Local Rule-Based Dictation (No AI API)
-            mainWindow.webContents.send('status-change', 'FORMATTING...');
-            finalOutput = formattingService.formatLiteral(result.text);
+            // SEQUENTIAL PIPELINE: Local Cleanup -> AI Polish
+            mainWindow.webContents.send('status-change', 'POLISHING...');
+            
+            // 1. Initial Local Smart Formatting (Remove fillers, handle bullets)
+            const cleanedLocal = formattingService.formatLiteral(result.text);
+            
+            // 2. Final Professional AI Polish (Groq)
+            finalOutput = await promptService.cleanTranscription(cleanedLocal, activeSelection, activeApp);
         }
 
         // 2. Buffer for safety
