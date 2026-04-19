@@ -117,7 +117,7 @@ app.onWhisperEvent = async (eventData) => {
         mainWindow.webContents.send('status-change', 'TYPING...');
         await typingService.typeText(finalOutput);
         
-        mainWindow.webContents.send('status-change', 'READY (ALT+CAPSLOCK)');
+        mainWindow.webContents.send('status-change', 'READY');
         activeSelection = ''; // Reset selection context
         activeApp = { app: 'Unknown', title: 'Unknown' }; // Reset app context
       } else if (result.error) {
