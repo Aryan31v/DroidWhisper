@@ -1,0 +1,259 @@
+:root {
+    --bg-color: #141419;
+    --accent-color: #23bb92;
+    --prompt-color: #a855f7;
+    --recording-color: #f5576c;
+    --text-color: #ffffff;
+    --solid-border: #33333a;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Outfit', 'Inter', system-ui, sans-serif;
+    background: transparent;
+    /* Transparent to show the curved pill */
+    color: var(--text-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    -webkit-app-region: drag;
+    overflow: hidden;
+}
+
+.pill {
+    width: 210px;
+    /* Aligned with READY state */
+    height: 48px;
+    background: var(--bg-color);
+    border: 2px solid var(--solid-border);
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.8);
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+        border-color 0.3s ease,
+        box-shadow 0.3s ease;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.mode-toggle {
+    flex-shrink: 0;
+    cursor: pointer;
+    -webkit-app-region: no-drag;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 4px 10px;
+    margin-right: 12px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    color: var(--accent-color);
+    border: 1px solid rgba(0, 242, 254, 0.2);
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.mode-toggle:hover {
+    background: rgba(0, 242, 254, 0.1);
+    transform: translateY(-1px);
+}
+
+.mode-toggle.prompt-mode {
+    color: var(--prompt-color);
+    border-color: rgba(168, 85, 247, 0.3);
+}
+
+.mode-toggle.prompt-mode:hover {
+    background: rgba(168, 85, 247, 0.1);
+}
+
+.status-dot {
+    flex-shrink: 0;
+    width: 10px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+}
+
+.dot {
+    width: 10px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dot-inner {
+    width: 8px;
+    height: 8px;
+    background: var(--accent-color);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--accent-color);
+    transition: all 0.3s ease;
+}
+
+.pill.recording .dot-inner {
+    background: var(--recording-color);
+    box-shadow: 0 0 15px var(--recording-color);
+    transform: scale(1.5);
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+        transform: scale(1.2);
+    }
+
+    50% {
+        opacity: 0.5;
+        transform: scale(1.5);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1.2);
+    }
+}
+
+.status-text {
+    flex-grow: 1;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: clip;
+    /* Clip for cleaner morphing */
+    text-transform: uppercase;
+}
+
+/* --- WAVEFORM STYLING (NEW v18.0 BREATHING) --- */
+.waveform {
+    display: none;
+    align-items: center;
+    gap: 4px;
+    height: 24px;
+    margin-right: 10px;
+    flex-grow: 1;
+    justify-content: center;
+    -webkit-app-region: no-drag;
+}
+
+.pill.recording .waveform {
+    display: flex;
+}
+
+.pill.recording .status-dot,
+.pill.recording .status-text {
+    display: none;
+}
+
+.bar {
+    width: 4px;
+    background: #ffffff;
+    border-radius: 4px;
+    height: 12px;
+    opacity: 0.8;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+    transform-origin: center;
+}
+
+.pill.recording .bar {
+    animation: breath 1.8s ease-in-out infinite;
+}
+
+/* Staggered offsets for organic wave feel */
+.bar:nth-child(1) {
+    animation-delay: 0.0s;
+}
+
+.bar:nth-child(2) {
+    animation-delay: 0.1s;
+}
+
+.bar:nth-child(3) {
+    animation-delay: 0.2s;
+}
+
+.bar:nth-child(4) {
+    animation-delay: 0.3s;
+}
+
+.bar:nth-child(5) {
+    animation-delay: 0.4s;
+}
+
+.bar:nth-child(6) {
+    animation-delay: 0.5s;
+}
+
+.bar:nth-child(7) {
+    animation-delay: 0.4s;
+}
+
+.bar:nth-child(8) {
+    animation-delay: 0.3s;
+}
+
+.bar:nth-child(9) {
+    animation-delay: 0.2s;
+}
+
+.bar:nth-child(10) {
+    animation-delay: 0.1s;
+}
+
+.bar:nth-child(11) {
+    animation-delay: 0.0s;
+}
+
+.bar:nth-child(12) {
+    animation-delay: 0.1s;
+}
+
+@keyframes breath {
+
+    0%,
+    100% {
+        transform: scaleY(1);
+        opacity: 0.5;
+        height: 12px;
+    }
+
+    50% {
+        transform: scaleY(2.2);
+        opacity: 1;
+        height: 12px;
+    }
+}
+
+.history-btn {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: #fbbf24;
+    cursor: pointer;
+    font-size: 1rem;
+    margin-left: 8px;
+    padding: 4px;
+    opacity: 0.4;
+    transition: all 0.3s ease;
+    -webkit-app-region: no-drag;
+    display: none;
+}
+
+.history-btn:hover {
+    opacity: 1;
+    transform: scale(1.2);
+}
+
+.history-btn.active {
+    display: block;
+}

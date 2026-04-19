@@ -72,50 +72,50 @@ app.onWhisperEvent = async (eventData) => {
     try {
       await scrcpyManager.startRecording(); // Now has 800ms warm-up
       if (mainWindow) {
-          mainWindow.webContents.send('status-change', currentMode === 'prompt' ? 'RECORDING (PROMPT)' : 'Recording...');
-      }
-    } finally {
-      isStarting = false;
+          mainWindow.webContents.send('status-change', currentMode === 'prompt' ? 'RECORDING (PROMPT)' : 'RECORDING');
     }
-  } else if (event === 'recording_stop') {
-    if (isStopping) return;
-    isStopping = true;
-    console.log('Main: Stopping recording and transcribing...');
-    if (mainWindow) {
-        mainWindow.webContents.send('status-change', 'Transcribing...');
-    }
+  } finally {
+    isStarting = false;
+  }
+} else if (event === 'recording_stop') {
+  if (isStopping) return;
+  isStopping = true;
+  console.log('Main: Stopping recording and transcribing...');
+  if (mainWindow) {
+      mainWindow.webContents.send('status-change', 'TRANSCRIBING');
+  }
+  
+  // Add a small grace period to ensure scrcpy captures the last bit
+  setTimeout(async () => {
+    try {
+      const audioFile = await scrcpyManager.stopRecording();
+      if (!audioFile) return;
+
+      const result = await transcriptionBridge.transcribe(audioFile);
     
-    // Add a small grace period to ensure scrcpy captures the last bit
-    setTimeout(async () => {
-      try {
-        const audioFile = await scrcpyManager.stopRecording();
-        if (!audioFile) return;
-
-        const result = await transcriptionBridge.transcribe(audioFile);
+    if (result.text) {
+      let finalOutput = result.text;
       
-      if (result.text) {
-        let finalOutput = result.text;
-        
-        if (currentMode === 'prompt') {
-            mainWindow.webContents.send('status-change', 'ENGINEERING PROMPT...');
-            finalOutput = await promptService.refinePrompt(result.text, activeSelection, activeApp);
-        } else {
-            // SEQUENTIAL PIPELINE: Local Cleanup -> AI Polish
-            mainWindow.webContents.send('status-change', 'POLISHING...');
-            
-            // 1. Initial Local Smart Formatting (Remove fillers, handle bullets)
-            const cleanedLocal = formattingService.formatLiteral(result.text);
-            
-            // 2. Final Professional AI Polish (Groq)
-            finalOutput = await promptService.cleanTranscription(cleanedLocal, activeSelection, activeApp);
-        }
+      if (currentMode === 'prompt') {
+          mainWindow.webContents.send('status-change', 'ENGINEERING PROMPT');
+          finalOutput = await promptService.refinePrompt(result.text, activeSelection, activeApp);
+      } else {
+          // SEQUENTIAL PIPELINE: Local Cleanup -> AI Polish
+          mainWindow.webContents.send('status-change', 'POLISHING');
+          
+          // 1. Initial Local Smart Formatting (Remove fillers, handle bullets)
+          const cleanedLocal = formattingService.formatLiteral(result.text);
+          
+          // 2. Final Professional AI Polish (Groq)
+          finalOutput = await promptService.cleanTranscription(cleanedLocal, activeSelection, activeApp);
+      }
 
-        // 2. Buffer for safety
-        lastOutput = finalOutput;
+      // 2. Buffer for safety
+      lastOutput = finalOutput;
 
-        // 3. Inject text
-        mainWindow.webContents.send('status-change', 'TYPING...');
-        await typingService.typeText(finalOutput);
+      // 3. Inject text
+      mainWindow.webContents.send('status-change', 'TYPING');
+      await typingService.typeText(finalOutput);
         
         mainWindow.webContents.send('status-change', 'READY');
         activeSelection = ''; // Reset selection context
