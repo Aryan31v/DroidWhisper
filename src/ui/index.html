@@ -226,6 +226,9 @@
                 
                 // Show History button once we have at least one transcription
                 historyBtn.classList.add('active');
+            } else if (upperStatus.includes('TYPING')) {
+                // Show the button EARLY so it's visible if a permission prompt pops up
+                historyBtn.classList.add('active');
             } else {
                 pill.classList.remove('recording');
                 pill.style.borderColor = 'var(--solid-border)';

@@ -13,6 +13,7 @@ const scrcpyManager = require('./src/features/audio/scrcpyManager');
 const transcriptionBridge = require('./src/features/transcription/transcriptionBridge');
 const typingService = require('./src/features/interaction/typingService');
 const promptService = require('./src/features/interaction/promptService');
+const formattingService = require('./src/features/interaction/formattingService');
 
 let mainWindow;
 let isStarting = false;
@@ -49,7 +50,11 @@ app.onWhisperEvent = async (eventData) => {
     if (isStarting || isStopping) return;
     isStarting = true;
     
-    // 1. Capture contextual information
+    // 1. Proactive Permission Probe (Persistent Connection)
+    // Taps the OS input layer at the start of EVERY session to prevent timeout loss.
+    await typingService.triggerPermissionProbe();
+
+    // 2. Capture contextual information
     activeSelection = await typingService.getPrimarySelection();
     activeApp = await typingService.getActiveWindowInfo();
     
@@ -96,9 +101,9 @@ app.onWhisperEvent = async (eventData) => {
             mainWindow.webContents.send('status-change', 'ENGINEERING PROMPT...');
             finalOutput = await promptService.refinePrompt(result.text, activeSelection, activeApp);
         } else {
-            // Smart Dictation: Polishing raw transcription
-            mainWindow.webContents.send('status-change', 'POLISHING...');
-            finalOutput = await promptService.cleanTranscription(result.text, activeSelection, activeApp);
+            // Local Rule-Based Dictation (No AI API)
+            mainWindow.webContents.send('status-change', 'FORMATTING...');
+            finalOutput = formattingService.formatLiteral(result.text);
         }
 
         // 2. Buffer for safety
