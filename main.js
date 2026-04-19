@@ -50,9 +50,8 @@ app.onWhisperEvent = async (eventData) => {
     if (isStarting || isStopping) return;
     isStarting = true;
     
-    // 1. Proactive Permission Probe (Persistent Connection)
-    // Taps the OS input layer at the start of EVERY session to prevent timeout loss.
-    await typingService.triggerPermissionProbe();
+    // 1. Proactive Permission Probe (Run concurrently with warm-up)
+    typingService.triggerPermissionProbe();
 
     // 2. Capture contextual information
     activeSelection = await typingService.getPrimarySelection();
@@ -71,7 +70,7 @@ app.onWhisperEvent = async (eventData) => {
 
     console.log(`Main: Starting recording flow (Mode: ${currentMode})...`);
     try {
-      await scrcpyManager.startRecording();
+      await scrcpyManager.startRecording(); // Now has 800ms warm-up
       if (mainWindow) {
           mainWindow.webContents.send('status-change', currentMode === 'prompt' ? 'RECORDING (PROMPT)' : 'Recording...');
       }

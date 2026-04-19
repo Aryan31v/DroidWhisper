@@ -61,8 +61,8 @@ const startRecording = async () => {
   });
 
   return new Promise((resolve, reject) => {
-    // We give it a small head start to initialize
-    setTimeout(resolve, 500);
+    // We give it a slightly larger head start (800ms) to ensure audio buffers stabilize
+    setTimeout(resolve, 800);
   });
 };
 
