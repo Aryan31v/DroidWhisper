@@ -1,21 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DroidWhisper</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div id="pill" class="pill">
-        <div class="mode-toggle" id="mode-toggle" title="Click to switch mode">
-            <span id="mode-text">DICT</span>
-        </div>
         <div class="status-dot">
             <div class="dot">
                 <div class="dot-inner"></div>
             </div>
         </div>
+        <div id="context-indicator" class="context-icon" title="Selection captured context">🔗</div>
+        
         <!-- WAVEFORM (Rhythmic Breathing v18.0) -->
         <div class="waveform">
             <div class="bar"></div>
@@ -31,11 +32,16 @@
             <div class="bar"></div>
             <div class="bar"></div>
         </div>
-        <div id="status-label" class="status-text">STARTING</div>
-        <div id="history-btn" class="history-btn" title="Re-inject last transcription (Use if first attempt failed)">🕒</div>
-        <div id="context-indicator" style="opacity: 0; color: #fbbf24; margin-left: 5px; font-size: 0.9rem; transition: opacity 0.3s ease;" title="Selection captured as context">🔗</div>
+        
+        <div class="status-container">
+            <div id="status-label" class="status-text">STARTING</div>
+            <div id="app-name-label" class="app-label">WATCHING: NONE</div>
+        </div>
+
+        <div id="history-btn" class="history-btn" title="Re-inject last transcription">🕒</div>
     </div>
 
     <script defer src="renderer.js"></script>
 </body>
+
 </html>
