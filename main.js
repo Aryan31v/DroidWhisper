@@ -150,8 +150,7 @@ function createWindow() {
       contextIsolation: false,
     },
     frame: false,
-    transparent: false,
-    backgroundColor: '#141419', // Solid dark background
+    transparent: true,
     alwaysOnTop: true,
     resizable: false,
   });
