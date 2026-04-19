@@ -7,8 +7,6 @@
 let mainWindow = null;
 let isStarting = false;
 let isStopping = false;
-let activeSelection = '';
-let activeApp = { app: 'Unknown', title: 'Unknown' };
 
 const setMainWindow = (win) => {
     mainWindow = win;
@@ -16,16 +14,12 @@ const setMainWindow = (win) => {
 
 const getStatus = () => ({
     isStarting,
-    isStopping,
-    activeSelection,
-    activeApp
+    isStopping
 });
 
 const setStatus = (status) => {
     if (status.isStarting !== undefined) isStarting = status.isStarting;
     if (status.isStopping !== undefined) isStopping = status.isStopping;
-    if (status.activeSelection !== undefined) activeSelection = status.activeSelection;
-    if (status.activeApp !== undefined) activeApp = status.activeApp;
 };
 
 const broadcastChange = (statusLabel) => {
@@ -34,9 +28,9 @@ const broadcastChange = (statusLabel) => {
     }
 };
 
-const notifyContext = (captured, appName) => {
+const notifyContext = () => {
     if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('context-captured', { captured, app: appName });
+        mainWindow.webContents.send('context-captured');
     }
 };
 

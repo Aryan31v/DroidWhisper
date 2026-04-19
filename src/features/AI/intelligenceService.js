@@ -10,7 +10,7 @@ const { appConfig } = require('../../config');
 /**
  * Processes the user's spoken intent against the current system context.
  */
-const processUserTask = async (rawTranscription, selectionContext = '', appInfo = { app: 'Unknown', title: 'Unknown' }) => {
+const processUserTask = async (rawTranscription) => {
   if (!rawTranscription) return '';
 
   try {
@@ -19,31 +19,11 @@ const processUserTask = async (rawTranscription, selectionContext = '', appInfo 
         'Authorization': `Bearer ${appConfig.GROQ.API_KEY}`
     };
 
-    // --- Dynamic Tone Selection (Wispr Mode) ---
-    const appKey = appInfo.app.toLowerCase();
-    const windowTitle = appInfo.title.toLowerCase();
-    let toneInstruction = appConfig.TONE_MAPPING.default;
-
-    if (appKey.includes('slack') || windowTitle.includes('slack')) {
-        toneInstruction = appConfig.TONE_MAPPING.slack;
-    } else if (appKey.includes('chrome') && (windowTitle.includes('gmail') || windowTitle.includes('mail'))) {
-        toneInstruction = appConfig.TONE_MAPPING['google-chrome'];
-    } else if (appKey.includes('code') || appKey.includes('cursor')) {
-        toneInstruction = appConfig.TONE_MAPPING.code;
-    }
-
     const systemPrompt = appConfig.PROMPT_ENGINEERING.SYSTEM_PROMPT;
-    const taskPrompt = appConfig.PROMPT_ENGINEERING.TASK_PROCESSOR_PROMPT.replace('{{TONE}}', toneInstruction);
+    const taskPrompt = appConfig.PROMPT_ENGINEERING.TASK_PROCESSOR_PROMPT;
     
-    // Construct a context-rich user message
-    let userMessage = '';
-    if (selectionContext) {
-        userMessage = `WINDOW: ${appInfo.app} (${appInfo.title})\n` +
-                     `CURRENT SELECTION:\n"""\n${selectionContext}\n"""\n\n` +
-                     `${taskPrompt} ${rawTranscription}`;
-    } else {
-        userMessage = `${taskPrompt} ${rawTranscription}`;
-    }
+    // Construct a focused user message
+    const userMessage = `${taskPrompt} ${rawTranscription}`;
 
     const response = await fetch(appConfig.GROQ.URL, {
       method: 'POST',

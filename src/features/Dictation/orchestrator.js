@@ -5,7 +5,6 @@
  */
 
 const engine = require('./engine');
-const capture = require('../TextAwareness/capture');
 const intelligenceService = require('../AI/intelligenceService');
 const stateService = require('../../core/stateService');
 const typer = require('../Interaction/typer');
@@ -16,14 +15,12 @@ const handleStart = async () => {
 
     stateService.setStatus({ isStarting: true });
 
-    // 1. Silent context capture
-    const selection = await capture.getPrimarySelection();
-    const appInfo = await capture.getActiveWindowInfo();
-    stateService.setStatus({ activeSelection: selection, activeApp: appInfo });
+    // 1. No Context Capture (Fully Blind Mode)
+    stateService.setStatus({ isStarting: true });
 
     try {
-        stateService.broadcastChange('RECORDING');
         await engine.startRecording();
+        stateService.broadcastChange('RECORDING');
     } catch (err) {
         console.error('Dictation: Start failed:', err);
         stateService.broadcastChange('READY');
@@ -52,9 +49,7 @@ const handleStop = async () => {
             // Everything is processed with 'Freedom' and Context Awareness
             const currentStatus = stateService.getStatus();
             const finalOutput = await intelligenceService.processUserTask(
-                result.text, 
-                currentStatus.activeSelection, 
-                currentStatus.activeApp
+                result.text
             );
 
             if (finalOutput) {
@@ -67,8 +62,7 @@ const handleStop = async () => {
             stateService.broadcastChange('READY');
             stateService.setStatus({ 
                 isStarting: false, 
-                isStopping: false, 
-                activeSelection: '' 
+                isStopping: false 
             });
         }
     }, 100);

@@ -11,7 +11,6 @@ require('dotenv').config();
 // Features (Organized by Semantic Responsibility)
 const stateService = require('./src/core/stateService');
 const orchestrator = require('./src/features/Dictation/orchestrator');
-const monitor = require('./src/features/TextAwareness/monitor');
 const typer = require('./src/features/Interaction/typer');
 const transcriptionBridge = require('./src/features/Dictation/transcriptionBridge');
 
@@ -70,7 +69,6 @@ ipcMain.on('trigger-permission-probe', async () => {
 app.whenReady().then(() => {
   createWindow();
   transcriptionBridge.startService();
-  monitor.start(); // Start Real-Time Text Awareness
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
@@ -78,7 +76,6 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', () => {
-  monitor.stop();
   transcriptionBridge.stopService();
   if (process.platform !== 'darwin') app.quit();
 });

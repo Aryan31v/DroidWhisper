@@ -1,5 +1,7 @@
 #!/bin/bash
 # DroidWhisper Configuration Script
+# v31.0: Self-situating pathing
+cd "$(dirname "$0")/.." || exit 1
 # 1. System Dependencies (v30.0)
 if command -v pacman &> /dev/null; then
     echo "Arch Linux detected. Ensuring system dependencies are met..."

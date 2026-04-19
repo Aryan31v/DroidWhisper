@@ -1,5 +1,7 @@
 #!/bin/bash
 # DroidWhisper Hardened Publish Script (v9.0)
+# v31.0: Self-situating pathing
+cd "$(dirname "$0")/.." || exit 1
 # Ensures personal data and secrets aren't accidentally committed.
 
 echo -e "\n🛡️ DroidWhisper Security Audit..."
