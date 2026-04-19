@@ -156,31 +156,9 @@
             background: #e5e7eb;
             border-radius: 4px;
             height: 8px;
-            transition: all 0.2s ease;
+            transform-origin: center;
+            transition: transform 0.05s ease; /* Ultra-low latency transition */
         }
-
-        @keyframes wavePulse {
-            0% { height: 8px; opacity: 0.4; }
-            50% { height: 28px; opacity: 1; }
-            100% { height: 8px; opacity: 0.4; }
-        }
-
-        .pill.recording .bar {
-            animation: wavePulse 1.2s ease-in-out infinite;
-        }
-
-        .bar:nth-child(1)  { animation-delay: 0.1s; height: 10px; }
-        .bar:nth-child(2)  { animation-delay: 0.3s; height: 18px; }
-        .bar:nth-child(3)  { animation-delay: 0.5s; height: 12px; }
-        .bar:nth-child(4)  { animation-delay: 0.2s; height: 22px; }
-        .bar:nth-child(5)  { animation-delay: 0.4s; height: 14px; }
-        .bar:nth-child(6)  { animation-delay: 0.6s; height: 26px; }
-        .bar:nth-child(7)  { animation-delay: 0.15s; height: 16px; }
-        .bar:nth-child(8)  { animation-delay: 0.45s; height: 20px; }
-        .bar:nth-child(9)  { animation-delay: 0.25s; height: 12px; }
-        .bar:nth-child(10) { animation-delay: 0.55s; height: 18px; }
-        .bar:nth-child(11) { animation-delay: 0.1s; height: 10px; }
-        .bar:nth-child(12) { animation-delay: 0.35s; height: 14px; }
 
         .history-btn {
             background: none;
@@ -245,8 +223,59 @@
         const modeText = document.getElementById('mode-text');
         const modeToggle = document.getElementById('mode-toggle');
         const pill = document.getElementById('pill');
+        const bars = document.querySelectorAll('.bar');
         
         let currentMode = 'dictation';
+        let audioContext, analyser, dataArray, source, animationId;
+
+        async function startVisualizer() {
+            try {
+                // To avoid multiple triggers
+                if (audioContext && audioContext.state !== 'closed') return;
+
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                source = audioContext.createMediaStreamSource(stream);
+                source.connect(analyser);
+
+                analyser.fftSize = 64; 
+                const bufferLength = analyser.frequencyBinCount;
+                dataArray = new Uint8Array(bufferLength);
+
+                const animate = () => {
+                    analyser.getFrequencyData ? analyser.getByteFrequencyData(dataArray) : null;
+                    if (analyser.getByteFrequencyData) analyser.getByteFrequencyData(dataArray);
+
+                    // Map frequency data to our 12 bars
+                    bars.forEach((bar, i) => {
+                        const index = i % bufferLength;
+                        const value = dataArray[index];
+                        const scale = (value / 128.0) * 1.5 + 0.5; // Responsive scaling
+                        bar.style.transform = `scaleY(${Math.min(scale, 3.5)})`;
+                        bar.style.opacity = Math.min((value / 128.0) + 0.4, 1);
+                    });
+                    animationId = requestAnimationFrame(animate);
+                };
+                animate();
+            } catch (err) {
+                console.error('Visualizer error:', err);
+            }
+        }
+
+        function stopVisualizer() {
+            if (animationId) cancelAnimationFrame(animationId);
+            if (source && source.mediaStream) {
+                source.mediaStream.getTracks().forEach(t => t.stop());
+            }
+            if (audioContext) audioContext.close().catch(() => {});
+            
+            // Reset bars to resting state
+            bars.forEach(bar => {
+                bar.style.transform = 'scaleY(1)';
+                bar.style.opacity = '0.4';
+            });
+        }
 
         // Trigger permission probe on startup to get the security pop-up out of the way
         window.addEventListener('load', () => {
@@ -286,20 +315,23 @@
                 pill.style.boxShadow = isPrompt 
                     ? '0 0 20px rgba(168, 85, 247, 0.4)' 
                     : '0 0 20px rgba(0, 242, 254, 0.4)';
+                
+                startVisualizer();
             } else if (upperStatus.includes('READY')) {
                 pill.classList.remove('recording');
                 pill.style.borderColor = currentMode === 'prompt' ? 'var(--prompt-color)' : 'var(--accent-color)';
                 pill.style.boxShadow = 'none';
+                historyBtn.classList.add('active');
                 
-                // Show History button once we have at least one transcription
-                historyBtn.classList.add('active');
+                stopVisualizer();
             } else if (upperStatus.includes('TYPING')) {
-                // Show the button EARLY so it's visible if a permission prompt pops up
                 historyBtn.classList.add('active');
+                stopVisualizer();
             } else {
                 pill.classList.remove('recording');
                 pill.style.borderColor = 'var(--solid-border)';
                 pill.style.boxShadow = 'none';
+                stopVisualizer();
             }
         });
 
