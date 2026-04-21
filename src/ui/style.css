@@ -116,6 +116,12 @@ body {
     animation: pulse 1.5s infinite;
 }
 
+.pill.loading .dot-inner {
+    background: var(--craft-color);
+    box-shadow: 0 0 15px var(--craft-color);
+    animation: pulse 2s infinite ease-in-out;
+}
+
 @keyframes pulse {
     0% {
         opacity: 1;

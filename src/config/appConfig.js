@@ -28,13 +28,15 @@ const config = {
   WHISPER: {
     PYTHON_BIN: path.join(__dirname, '../../.venv/bin/python3'),
     SERVICE_PATH: path.join(__dirname, '../../src/services/whisperBackend.py'),
-    MODEL_SIZE: 'base.en', // English only for maximum speed
-    DEVICE: 'cpu', // Use 'cuda' if GPU available
+    MODEL_SIZE: 'tiny', // Absolute fastest model for old hardware
+    DEVICE: 'cpu', // Will be auto-upgraded in backend if CUDA found
+    TRANSCRIPTION_TIMEOUT: 1200000, // 2 minutes (up from 20s)
   },
 
   // OS Integration
   TYPING: {
     COMMAND: 'xdotool type --delay 5',
+    PASTE_MODIFIER: 'ctrl+v',
   },
 
   // AI & Prompt Engineering (using Groq)
@@ -44,23 +46,26 @@ const config = {
     API_KEY: process.env.GROQ_API_KEY,
   },
 
-
   PROMPT_ENGINEERING: {
     /**
-     * Droid High-Fidelity Intelligence (v29.0)
+     * Droid High-Fidelity Intelligence (v31.0 - Turbo)
      */
-    SYSTEM_PROMPT: `You are Droid, a human-centric transcription engine.
-Your MISSION is to be a perfect mirror of the user's spoken words.
+    SYSTEM_PROMPT: `You are Droid Intel, a precision-focused transcription engine.
+Your sole purpose is to clean up raw audio transcriptions into high-quality text based on the requested [MODE].
 
-CORE RULES:
-1. FIDELITY: Maintain 100% of the user's original word choice and sentence structure. 
-2. NO REWRITING: Do not improve, polish, or summarize. Keep it raw and authentic.
-3. PUNCTUATION: Apply perfect capitalization and punctuation to make the raw speech readable.
-4. CLEANUP: Only remove repetitive stammers (e.g., "um", "ah").
-5. SELF-CORRECTION: If the user says something then says "actually [new thing]", only output the [new thing] if it is a direct correction.
-6. NO CHATTER: Output only the transcription. No conversational filler.`,
-    
-    TASK_PROCESSOR_PROMPT: `Apply punctuation and format this transcription while preserving every word exactly: `,
+STRICT RULES:
+1. Output ONLY the refined text. 
+2. ABSOLUTELY NO CHATTER. Do not explain what you did. Do not narrate your process.
+3. NO PREAMBLE. Do not say "The refined output is" or "Here is the cleaned text".
+4. If the input is the user telling you to do something, simply execute it and output the result.
+
+MODES:
+- DICTATE: Clean up stutters and filler words while remaining 100% faithful to the original intent.
+- FLOW: Rephrase rambling thoughts into professional, eloquent communication.
+- CRAFT: Structure the data into lists, summaries, or specific formats.`,
+
+    // The "Turbo" Single-Pass prompt
+    TASK_PROCESSOR_PROMPT: "Transform the following RAW INPUT using MODE: ",
     CONTEXT: ''
   }
 };

@@ -58,14 +58,17 @@ ipcRenderer.on('status-change', (event, status) => {
         pill.classList.remove('recording');
         pill.style.borderColor = 'var(--accent-color)';
         pill.style.boxShadow = 'none';
-        // appLabel.innerText = 'WATCHING: NONE'; // Keep last app visible or let monitor update it
-        
         // Re-sync icon with monitor's last known state if needed
-        // (The next monitor pulse will restore it if selection is still active)
     } else if (upperStatus.includes('TYPING')) {
         // Typing status logic
+    } else if (upperStatus.includes('LOADING')) {
+        pill.classList.add('loading');
+        pill.classList.remove('recording');
+        pill.style.borderColor = 'var(--craft-color)';
+        pill.style.boxShadow = `0 0 15px rgba(251, 191, 36, 0.3)`;
     } else {
         pill.classList.remove('recording');
+        pill.classList.remove('loading');
         pill.style.borderColor = 'var(--solid-border)';
         pill.style.boxShadow = 'none';
         

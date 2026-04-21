@@ -10,7 +10,12 @@ const { appConfig } = require('../../config');
 /**
  * Processes the user's spoken intent against the current system context.
  */
-const processUserTask = async (rawTranscription) => {
+/**
+ * Processes the user's spoken intent against the current system context.
+ * Single-Pass Turbo Mode (v31.0):
+ * Optimized for speed using In-Context Refinement.
+ */
+const processUserTask = async (rawTranscription, intent = 'dictate') => {
   if (!rawTranscription) return '';
 
   try {
@@ -20,21 +25,22 @@ const processUserTask = async (rawTranscription) => {
     };
 
     const systemPrompt = appConfig.PROMPT_ENGINEERING.SYSTEM_PROMPT;
-    const taskPrompt = appConfig.PROMPT_ENGINEERING.TASK_PROCESSOR_PROMPT;
-    
-    // Construct a focused user message
-    const userMessage = `${taskPrompt} ${rawTranscription}`;
+    const taskPrompt = `${appConfig.PROMPT_ENGINEERING.TASK_PROCESSOR_PROMPT} [MODE: ${intent.toUpperCase()}]`;
+
+    // Speed Optimization: Use faster model (8B) for simple dictation tasks without special triggers
+    const isSimpleDictation = intent === 'dictate' && !rawTranscription.toLowerCase().includes('droid');
+    const model = isSimpleDictation ? 'llama-3.1-8b-instant' : appConfig.GROQ.MODEL;
 
     const response = await fetch(appConfig.GROQ.URL, {
       method: 'POST',
       headers: headers,
       body: JSON.stringify({
-        model: appConfig.GROQ.MODEL,
+        model: model, 
         messages: [
             { role: 'system', content: systemPrompt },
-            { role: 'user', content: userMessage }
+            { role: 'user', content: `${taskPrompt}\n\nRAW INPUT: ${rawTranscription}` }
         ],
-        temperature: 0.1,
+        temperature: 0.2,
       }),
     });
 

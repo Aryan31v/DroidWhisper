@@ -29,21 +29,6 @@ const COMMAND_KEYWORDS = {
         'literal',
         'exactly as i say',
         'transcribe this'
-    ],
-    query: [
-        'what app',
-        'what application',
-        'whats the app',
-        'what\'s the app',
-        'detect app',
-        'identify app',
-        'identify the app',
-        'status',
-        'where am i',
-        'which app',
-        'who are you',
-        'running',
-        'software'
     ]
 };
 
@@ -54,8 +39,6 @@ const AGENT_NAME = 'droid';
  * @param {string} text - Raw transcription.
  * @returns {Object} { intent: 'dictate'|'rephrase'|'transform', cleanedText: string, isCommand: boolean }
  */
-const AGENT_NAME = 'droid';
-
 const detectIntent = (text) => {
     if (!text) return { intent: 'dictate', cleanedText: '', isCommand: false };
 

@@ -7,6 +7,7 @@
 let mainWindow = null;
 let isStarting = false;
 let isStopping = false;
+let isServiceReady = false;
 
 const setMainWindow = (win) => {
     mainWindow = win;
@@ -14,12 +15,14 @@ const setMainWindow = (win) => {
 
 const getStatus = () => ({
     isStarting,
-    isStopping
+    isStopping,
+    isServiceReady
 });
 
 const setStatus = (status) => {
     if (status.isStarting !== undefined) isStarting = status.isStarting;
     if (status.isStopping !== undefined) isStopping = status.isStopping;
+    if (status.isServiceReady !== undefined) isServiceReady = status.isServiceReady;
 };
 
 const broadcastChange = (statusLabel) => {
@@ -28,16 +31,9 @@ const broadcastChange = (statusLabel) => {
     }
 };
 
-const notifyContext = () => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('context-captured');
-    }
-};
-
 module.exports = {
     setMainWindow,
     getStatus,
     setStatus,
-    broadcastChange,
-    notifyContext
+    broadcastChange
 };

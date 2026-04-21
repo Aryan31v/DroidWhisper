@@ -1,5 +1,6 @@
 {
-    "technical_terms": [
+    "technical_hints": [
+        "GitHub",
         "DroidWhisper",
         "scrcpy",
         "xdotool",
@@ -7,26 +8,11 @@
         "Groq",
         "Llama-3",
         "Whisper",
-        "ChatGPT",
-        "LangChain",
-        "DeepSeek",
-        "Higgsfield AI",
-        "Google Calendar",
-        "LinkedIn",
-        "WhatsApp",
-        "Instagram",
-        "Facebook",
-        "Hugging Face",
-        "git commit",
-        "npm install",
-        "bash",
-        "Cryponic"
-    ],
-    "project_names": [
-        "DroidWhisper"
+        "Cryponic",
+        "Git",
+        "He"
     ],
     "custom_shorthand": {
-        "dw": "DroidWhisper",
-        "gec": "git commit"
+        "dw": "DroidWhisper"
     }
 }

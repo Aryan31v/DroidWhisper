@@ -6,12 +6,18 @@
 
 const engine = require('./engine');
 const intelligenceService = require('../AI/intelligenceService');
+const intentService = require('../Interaction/intentService');
 const stateService = require('../../core/stateService');
 const typer = require('../Interaction/typer');
+const fs = require('fs');
+const path = require('path');
 
 const handleStart = async () => {
     const status = stateService.getStatus();
-    if (status.isStarting || status.isStopping) return;
+    if (status.isStarting || status.isStopping || !status.isServiceReady) {
+        if (!status.isServiceReady) console.warn('Dictation: Service not ready yet.');
+        return;
+    }
 
     stateService.setStatus({ isStarting: true });
 
@@ -35,21 +41,27 @@ const handleStop = async () => {
     stateService.setStatus({ isStopping: true });
     stateService.broadcastChange('TRANSCRIBING');
 
+    let audioFile = null;
     setTimeout(async () => {
         try {
-            const audioFile = await engine.stopRecording();
+            audioFile = await engine.stopRecording();
             if (!audioFile) return;
 
             const result = await engine.transcribe(audioFile);
             if (!result || !result.text) return;
 
-            stateService.broadcastChange('DROID THINKING');
+            // --- Intent Detection (v30.0) ---
+            const { intent, cleanedText, isCommand } = intentService.detectIntent(result.text);
+            
+            // Broadcast specialized identity glows
+            if (intent === 'rephrase') stateService.broadcastChange('DROID THINKING');
+            else if (intent === 'transform') stateService.broadcastChange('CRAFTING');
+            else stateService.broadcastChange('TRANSCRIBING');
 
-            // --- Agentic Intelligence (v27.0) ---
-            // Everything is processed with 'Freedom' and Context Awareness
-            const currentStatus = stateService.getStatus();
+            // --- High-Fidelity Two-Pass AI ---
             const finalOutput = await intelligenceService.processUserTask(
-                result.text
+                result.text,
+                intent
             );
 
             if (finalOutput) {
@@ -59,6 +71,16 @@ const handleStop = async () => {
         } catch (err) {
             console.error('Dictation: Stop/Process failed:', err);
         } finally {
+            // New: Managed Cleanup for Unique Recording Files (v29.1)
+            if (audioFile && fs.existsSync(audioFile)) {
+                try {
+                    fs.unlinkSync(audioFile);
+                    console.log(`Dictation: Cleaned up session file: ${path.basename(audioFile)}`);
+                } catch (e) {
+                    console.error('Dictation: Cleanup failed:', e);
+                }
+            }
+
             stateService.broadcastChange('READY');
             stateService.setStatus({ 
                 isStarting: false, 

@@ -55,6 +55,7 @@ app.onWhisperEvent = async (eventData) => {
       await orchestrator.handleStop();
       break;
     case 'service_ready':
+      stateService.setStatus({ isServiceReady: true });
       stateService.broadcastChange('READY');
       break;
   }

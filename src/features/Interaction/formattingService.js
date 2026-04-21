@@ -22,7 +22,23 @@ const ACRONYM_MAP = {
   'git': 'Git',
   'url': 'URL',
   'http': 'HTTP',
-  'https': 'HTTPS'
+  'https': 'HTTPS',
+  'scrcpy': 'scrcpy',
+  'xdotool': 'xdotool',
+  'xclip': 'xclip',
+  'groq': 'Groq',
+  'llama': 'Llama',
+  'whisper': 'Whisper',
+  'k8s': 'K8s',
+  'docker': 'Docker',
+  'sql': 'SQL',
+  'nosql': 'NoSQL',
+  'aws': 'AWS',
+  'gcp': 'GCP',
+  'azure': 'Azure',
+  'json': 'JSON',
+  'yaml': 'YAML',
+  'xml': 'XML'
 };
 
 /**

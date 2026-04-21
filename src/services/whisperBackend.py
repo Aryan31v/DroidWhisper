@@ -12,6 +12,7 @@ import json
 import threading
 import time
 from faster_whisper import WhisperModel
+import ctranslate2
 from pynput import keyboard
 
 # State management
@@ -62,9 +63,30 @@ def start_hotkey_listener(callback_start, callback_stop):
 
 def main():
     # Configuration
-    model_size = os.getenv("WHISPER_MODEL", "base.en")
+    model_size = os.getenv("WHISPER_MODEL", "distil-large-v3")
     device = os.getenv("WHISPER_DEVICE", "cpu")
-    compute_type = "int8" if device == "cpu" else "float16"
+    
+    # Auto-upgrade to CUDA if available
+    if ctranslate2.get_cuda_device_count() > 0:
+        device = "cuda"
+        compute_type = "float16"
+        print("DEBUG: CUDA available. Using GPU acceleration.", file=sys.stderr)
+    else:
+        compute_type = "int8"
+        print("DEBUG: CUDA not found. Using CPU.", file=sys.stderr)
+
+    # Load vocabulary for phonetic hinting (v2.0)
+    initial_prompt = "Hello. " # Standardize starting state
+    try:
+        vocab_path = os.path.join(os.path.dirname(__file__), "../config/vocabulary.json")
+        if os.path.exists(vocab_path):
+            with open(vocab_path, 'r') as f:
+                vocab_data = json.load(f)
+                hints = vocab_data.get("technical_hints", [])
+                initial_prompt += ", ".join(hints)
+                print(f"DEBUG: Loaded {len(hints)} vocabulary hints.", file=sys.stderr)
+    except Exception as e:
+        print(f"DEBUG: Vocabulary load failed: {str(e)}", file=sys.stderr)
 
     print(f"DEBUG: Initializing faster-whisper model '{model_size}'...", file=sys.stderr)
     
@@ -74,6 +96,7 @@ def main():
     except Exception as e:
         print(json.dumps({"error": f"Model load failed: {str(e)}"}), flush=True)
         sys.exit(1)
+
     
     print("READY", flush=True)
 
@@ -103,8 +126,10 @@ def main():
         try:
             segments, info = model.transcribe(
                 audio_path, 
-                beam_size=5, 
-                condition_on_previous_text=False # Prevents 'and and and' loops
+                beam_size=1, # Turbo: Greedy search is faster for distil models
+                best_of=1,
+                initial_prompt=initial_prompt, 
+                condition_on_previous_text=False
             )
             
             result_text = ""

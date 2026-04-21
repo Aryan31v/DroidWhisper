@@ -114,7 +114,7 @@ const transcribe = (audioPath) => {
             resolve({ error: 'Timeout' });
             resolvePromise = null;
         }
-    }, 20000);
+    }, appConfig.WHISPER.TRANSCRIPTION_TIMEOUT);
 
     resolvePromise = (res) => {
         if (transcriptionTimeout) clearTimeout(transcriptionTimeout);
