@@ -34,7 +34,7 @@ Getting the results right the first time, every time.
 
 - **Custom Vocabulary (`vocabulary.json`)**: A persistent "Personal Dictionary." Droid prioritizes these words if any audio sounds phonetically similar (e.g., "Cryponic", "Antigravity").
 - **Snippet Expansion (`snippets.json`)**: Vocal macros. Say *"insert meeting link"* and Droid automatically swaps the keyword for the full URL.
-- **Selection-Aware Intelligence**: Droid checks what you have highlighted on your screen. If you select text and say *"fix this,"* he knows exactly what to target.
+- **Strict Literal Transcription**: Enhanced AI rules to ensure your core meaning and wording are preserved without unwanted rephrasing.
 - **App & Tool Awareness**: Pre-configured knowledge of modern tools:
     - **IDEs**: VS Code, Antigravity (by Google).
     - **Note-taking**: Notion, Obsidian.
@@ -46,8 +46,8 @@ Getting the results right the first time, every time.
 Battle-tested stability for professional use.
 
 - **Native scrcpy Recording**: Reverted to the ultra-stable `--record` flag to prevent audio drops and transcription hangs on older hardware.
-- **Clipboard Injection (Safe Type)**: Uses `xclip` + `Ctrl+V` for maximum speed and perfect character formatting, with a fallback to `xdotool` logic if needed.
-- **Safety Buffer**: Remembers the last successful transcription. If a system dialog blocks the typing, you can simply click the **🕒 History Button** to re-inject the text.
+- **Clipboard Management**: Uses `xclip` to inject text into both the system clipboard and primary selection. Supports standard `Ctrl+V` and terminal middle-click pasting.
+- **Universal Commands**: Manage the service from any terminal with `droidwhisper start`, `stop`, `restart`, and `status`.
 - **Process Orchestration**: Automatically handles the startup of the Whisper Python server and USB connections to your Android device.
 
 ---
@@ -57,9 +57,9 @@ Battle-tested stability for professional use.
 | :--- | :--- |
 | `main.js` | The "Central Nervous System" / Orchestrator. |
 | `src/ui/` | The "Body" (HTML/CSS/JS refactored for performance). |
-| `src/features/interaction/intentService.js` | The "Brain" (Intent detection). |
-| `src/features/interaction/promptService.js` | The "Mouth" (AI Personas & Snippets). |
-| `src/config/vocabulary.json` | The "Memory" (Your custom words). |
+| `src/features/AI/intelligenceService.js` | The "Smart Brain" (AI processing & refinement). |
+| `src/features/Interaction/intentService.js` | The "Interpreter" (Intent detection & Snippets). |
+| `src/features/Interaction/typer.js` | The "Clipboard Engine" (Copy to system selections). |
 | `src/config/snippets.json` | The "Tools" (Your vocal macros). |
 
 ---

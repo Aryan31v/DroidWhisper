@@ -92,17 +92,22 @@ const transcribe = (audioPath) => {
   }
 
   return new Promise((resolve) => {
-    // 1. Guard: Check if file is too small (empty/accidental press)
+    // 1. Guard: Check if file exists and is readable
     try {
+        if (!fs.existsSync(audioPath)) {
+            console.warn('Bridge: Audio file does not exist.');
+            resolve({ text: '', error: 'missing' });
+            return;
+        }
         const stats = fs.statSync(audioPath);
-        if (stats.size < 1000) { // Less than ~1KB (approx 4ms of audio)
+        if (stats.size < 1000) { // Less than ~1KB
             console.log('Bridge: Audio file too small, skipping transcription.');
             resolve({ text: '', info: 'empty' });
             return;
         }
     } catch (e) {
-        console.error('Bridge: Could not stat audio file:', e);
-        resolve({ error: 'File read error' });
+        console.error('Bridge: Could not access audio file:', e);
+        resolve({ text: '', error: 'access_denied' });
         return;
     }
 

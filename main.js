@@ -20,21 +20,27 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 350,
     height: 60,
-    x: 0,
-    y: 50,
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
-    },
     frame: false,
     transparent: true,
     alwaysOnTop: true,
     resizable: false,
+    skipTaskbar: true,
+    hasShadow: false,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false,
+    },
   });
 
   mainWindow.center();
   mainWindow.setPosition(mainWindow.getPosition()[0], 20);
   mainWindow.loadFile('src/ui/index.html');
+
+  // Linux Transparency Fix: Ensure window is visible and on top
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show();
+    mainWindow.setAlwaysOnTop(true, 'screen-saver');
+  });
 
   // Link status updates to the UI
   stateService.setMainWindow(mainWindow);

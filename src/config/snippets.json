@@ -1,9 +1,0 @@
-{
-    "email_sig": "Best regards,\n[Your Name]\n\nSent via DroidWhisper",
-    "meeting_link": "https://meet.google.com/abc-defg-hij",
-    "prompt_header": "Act as a Senior Software Engineer. Provide a detailed, technical response with code examples and best practices.",
-    "email_follow_up": "Hi [Name],\n\nI'm following up on our previous conversation regarding [Project]. Looking forward to hearing your thoughts.\n\nBest,\n[Your Name]",
-    "linkedin_connect": "Hi [Name],\n\nI've been following your work in [Field] and would love to connect and learn more about your journey.\n\nBest,\n[Your Name]",
-    "search_technical": "site:stackoverflow.com OR site:github.com [Your Error Message] -inurl:tutorial",
-    "social_rephrase": "Rephrase the following to be more engaging for a professional audience, keeping it under 280 characters."
-}

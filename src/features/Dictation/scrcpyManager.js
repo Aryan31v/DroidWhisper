@@ -2,6 +2,7 @@ const { spawn } = require('child_process');
 const { appConfig } = require('../../config');
 const fs = require('fs');
 const path = require('path');
+const adbService = require('../../services/adbService');
 
 let scrcpyProcess = null;
 let currentRecordingPath = null;
@@ -12,6 +13,12 @@ let currentRecordingPath = null;
  */
 const startRecording = async () => {
   if (scrcpyProcess) return;
+
+  // Ensure device is connected (Wireless Fallback)
+  const connected = await adbService.ensureConnection();
+  if (!connected) {
+      throw new Error('Device not connected. Check WiFi/USB.');
+  }
 
   // Generate unique filename to prevent stale data reads (v29.1 Fix)
   const filename = `recording_${Date.now()}.wav`;
@@ -30,8 +37,21 @@ const startRecording = async () => {
   console.log(`Restoration: Starting native scrcpy recording [${filename}]...`);
   scrcpyProcess = spawn(appConfig.AUDIO.SC_RC_PY_PATH, args);
 
+  scrcpyProcess.on('error', (err) => {
+    console.error('scrcpy: Failed to start process:', err);
+    scrcpyProcess = null;
+  });
+
+  scrcpyProcess.on('close', (code) => {
+    if (code !== 0 && code !== null) {
+      console.error(`scrcpy: Process exited with code ${code}`);
+    }
+    scrcpyProcess = null;
+  });
+
   scrcpyProcess.stderr.on('data', (data) => {
-    console.error('[scrcpy]', data.toString().trim());
+    const msg = data.toString().trim();
+    console.error('[scrcpy]', msg);
   });
 
   return new Promise((resolve) => {
@@ -40,12 +60,24 @@ const startRecording = async () => {
 };
 
 const stopRecording = async () => {
-  if (!scrcpyProcess) return null;
+  if (!scrcpyProcess) {
+    // If process already died, just return the path (it might be empty/non-existent)
+    const p = currentRecordingPath;
+    currentRecordingPath = null;
+    return p;
+  }
 
   const recordingPath = currentRecordingPath;
   
   return new Promise((resolve) => {
+    const timeout = setTimeout(() => {
+        console.warn('scrcpy: Stop timed out, forcing kill.');
+        scrcpyProcess = null;
+        resolve(recordingPath);
+    }, 2000);
+
     scrcpyProcess.on('close', () => {
+      clearTimeout(timeout);
       console.log('Restoration: Native recording finished.');
       scrcpyProcess = null;
       currentRecordingPath = null;

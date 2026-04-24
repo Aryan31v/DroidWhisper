@@ -1,35 +1,38 @@
 /**
  * typer.js
  * Feature: Interaction
- * High-performance text injection using clipboard and keyboard emulation.
+ * Universal Mode: Always Copy + Always Paste (Ctrl+V).
+ * v34.0: Zero-detection logic for maximum reliability.
  */
 
-const { exec } = require('child_process');
-const { spawn } = require('child_process');
+const { exec, spawn } = require('child_process');
 
 /**
- * Injects text into the active cursor position.
+ * Copies text to clipboard and triggers a universal Ctrl+V paste.
  */
 const type = async (text) => {
     if (!text) return;
     
-    console.log(`Interaction: Injecting ${text.length} chars...`);
+    console.log(`Interaction: Copying and Pasting ${text.length} chars...`);
     
     try {
-        // Professional xclip pipe for stable injection (v24.0 approach)
+        // 1. Copy to System Clipboard (Ctrl+V)
         const xclip = spawn('xclip', ['-selection', 'clipboard', '-i']);
         xclip.stdin.write(text);
         xclip.stdin.end();
 
-        // Give the OS 100ms to register the clipboard change
-        await new Promise(r => setTimeout(r, 100));
-        
-        // Execute Paste
-        exec('xdotool key --delay 10 ctrl+v');
+        // 2. Copy to Primary Selection (Middle-click)
+        const xclipPrimary = spawn('xclip', ['-selection', 'primary', '-i']);
+        xclipPrimary.stdin.write(text);
+        xclipPrimary.stdin.end();
 
-        // Professional Buffer: Wait for target app to ingest before restoration
-        // Value increased to 1.2s for VS Code stability
-        await new Promise(r => setTimeout(r, 1200));
+        // 3. Small buffer to ensure xclip is finished
+        await new Promise(r => setTimeout(r, 150));
+
+        // 4. Trigger Universal Paste (Ctrl+V)
+        // Works in Browsers, Editors, and standard GUI apps.
+        // In terminals, this may do nothing, but the text is safe in your clipboard.
+        exec('xdotool key --delay 10 ctrl+v');
 
     } catch (err) {
         console.error('Interaction: Injection failed:', err);

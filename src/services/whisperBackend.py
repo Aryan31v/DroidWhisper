@@ -75,18 +75,7 @@ def main():
         compute_type = "int8"
         print("DEBUG: CUDA not found. Using CPU.", file=sys.stderr)
 
-    # Load vocabulary for phonetic hinting (v2.0)
-    initial_prompt = "Hello. " # Standardize starting state
-    try:
-        vocab_path = os.path.join(os.path.dirname(__file__), "../config/vocabulary.json")
-        if os.path.exists(vocab_path):
-            with open(vocab_path, 'r') as f:
-                vocab_data = json.load(f)
-                hints = vocab_data.get("technical_hints", [])
-                initial_prompt += ", ".join(hints)
-                print(f"DEBUG: Loaded {len(hints)} vocabulary hints.", file=sys.stderr)
-    except Exception as e:
-        print(f"DEBUG: Vocabulary load failed: {str(e)}", file=sys.stderr)
+    initial_prompt = "The following is a high-fidelity verbatim transcription of a user speaking. Every word is preserved exactly."
 
     print(f"DEBUG: Initializing faster-whisper model '{model_size}'...", file=sys.stderr)
     
@@ -126,8 +115,10 @@ def main():
         try:
             segments, info = model.transcribe(
                 audio_path, 
-                beam_size=1, # Turbo: Greedy search is faster for distil models
-                best_of=1,
+                beam_size=5, # Higher beam size helps the tiny model stay on track
+                best_of=5,
+                vad_filter=True, # Filter out non-speech to prevent "cutting off"
+                vad_parameters=dict(min_silence_duration_ms=1000),
                 initial_prompt=initial_prompt, 
                 condition_on_previous_text=False
             )
@@ -140,14 +131,14 @@ def main():
                 if not seg_text:
                     continue
                 
-                # If there's a significant gap (> 0.6s) between segments, or it's the first segment,
+                # If there's a significant gap (> 1.5s) between segments, or it's the first segment,
                 # handle joining intelligently. 
                 if i == 0:
                     result_text = seg_text
                 else:
                     gap = segment.start - last_end
-                    # If gap is large, treat as a new paragraph/heading
-                    if gap > 0.6:
+                    # If gap is large, treat as a new paragraph
+                    if gap > 1.5:
                         result_text += "\n" + seg_text
                     else:
                         result_text += " " + seg_text

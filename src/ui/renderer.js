@@ -74,5 +74,3 @@ ipcRenderer.on('status-change', (event, status) => {
         
     }
 });
-
-
