@@ -14,10 +14,18 @@ let currentRecordingPath = null;
 const startRecording = async () => {
   if (scrcpyProcess) return;
 
-  // Ensure device is connected (Wireless Fallback)
-  const connected = await adbService.ensureConnection();
-  if (!connected) {
-      throw new Error('Device not connected. Check WiFi/USB.');
+  // 1. Ensure device is connected (Wireless Fallback)
+  // We probe manually here to get the correct serial for scrcpy
+  let targetSerial = null;
+  const isConnected = await adbService.isDeviceConnected();
+  
+  if (!isConnected) {
+    console.log('Restoration: No device found. Attempting WiFi fallback...');
+    const wifiConnected = await adbService.connectWireless();
+    if (!wifiConnected) {
+      throw new Error('Audio Engine Error: No device found via USB or WiFi. Please check connections.');
+    }
+    targetSerial = `${appConfig.AUDIO.DEVICE_IP}:5555`;
   }
 
   // Generate unique filename to prevent stale data reads (v29.1 Fix)
@@ -34,28 +42,44 @@ const startRecording = async () => {
     '--no-audio-playback',
   ];
 
+  if (targetSerial) {
+    args.push('--serial', targetSerial);
+    console.log(`Restoration: Using WiFi serial [${targetSerial}]`);
+  }
+
   console.log(`Restoration: Starting native scrcpy recording [${filename}]...`);
-  scrcpyProcess = spawn(appConfig.AUDIO.SC_RC_PY_PATH, args);
+  
+  try {
+    scrcpyProcess = spawn(appConfig.AUDIO.SC_RC_PY_PATH, args);
 
-  scrcpyProcess.on('error', (err) => {
-    console.error('scrcpy: Failed to start process:', err);
-    scrcpyProcess = null;
-  });
+    scrcpyProcess.on('error', (err) => {
+      console.error('scrcpy: Failed to start process:', err);
+      scrcpyProcess = null;
+    });
 
-  scrcpyProcess.on('close', (code) => {
-    if (code !== 0 && code !== null) {
-      console.error(`scrcpy: Process exited with code ${code}`);
-    }
-    scrcpyProcess = null;
-  });
+    scrcpyProcess.on('close', (code) => {
+      if (code !== 0 && code !== null) {
+        console.error(`scrcpy: Process exited with code ${code}`);
+      }
+      scrcpyProcess = null;
+    });
 
-  scrcpyProcess.stderr.on('data', (data) => {
-    const msg = data.toString().trim();
-    console.error('[scrcpy]', msg);
-  });
+    scrcpyProcess.stderr.on('data', (data) => {
+      const msg = data.toString().trim();
+      if (msg.includes('ERROR')) {
+          console.error('[scrcpy Critical]', msg);
+      } else {
+          console.log('[scrcpy]', msg);
+      }
+    });
+
+  } catch (err) {
+    console.error('Audio Engine: Spawn failed:', err);
+    throw err;
+  }
 
   return new Promise((resolve) => {
-    setTimeout(resolve, 800);
+    setTimeout(resolve, 1000); // Increased buffer for WiFi initialization
   });
 };
 
